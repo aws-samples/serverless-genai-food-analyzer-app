@@ -1,0 +1,17 @@
+
+!jest.config.js
+*.d.ts
+node_modules
+.package-lock.json
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+lib/**/*.js
+bin/*.js
+lambda/**/*.js
+resources/ui/public/aws-exports.json
+resources/ui/dist
+
+.DS_Store

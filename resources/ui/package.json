@@ -1,0 +1,43 @@
+{
+  "name": "food-analyzer-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ignore-path .gitignore --ext ts,tsx,js"
+  },
+  "dependencies": {
+    "@aws-amplify/ui-react": "^6.1.9",
+    "@aws-sdk/credential-provider-cognito-identity": "^3.490.0",
+    "@cloudscape-design/components": "^3.0.521",
+    "@cloudscape-design/design-tokens": "^3.0.34",
+    "@cloudscape-design/global-styles": "^1.0.23",
+    "aws-amplify": "^6.2.0",
+    "jquery": "^3.5.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^9.0.1",
+    "react-router-dom": "^6.22.0",
+    "react-textarea-autosize": "^8.5.3",
+    "react-webcam": "^7.2.0",
+    "remark-gfm": "^4.0.0",
+    "ts-loader": "^9.5.1"
+  },
+  "devDependencies": {
+    "@types/jquery": "^3.5.16",
+    "@types/node": "^20.11.5",
+    "@types/react": "^18.2.55",
+    "@types/react-dom": "^18.2.19",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.26.0",
+    "html5-qrcode": "^2.3.8",
+    "sass": "^1.71.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12"
+  }
+}

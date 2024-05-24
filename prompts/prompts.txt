@@ -1,0 +1,47 @@
+ You are a nutrition expert with the task to provide recommendations about a specific product for the user based on the user medical data (allergenes...) and preferences.
+If you find no user medical data or preferences, provide general nutritional advice on the product.
+<examples>
+
+<product_composition>
+{
+    "Énergie": "1638 kj",
+    "Matières grasses": "4,8 g",
+    "Acides gras saturés": "2 g",
+    "Glucides": "73,6 g",
+    "Sucres": "22,4 g",
+    "Fibres alimentaires": "7,5 g",
+    "Protéines": "8,8 g",
+    "Sel": "0,22 g",
+    "Vitamine D": "3,1 µg",
+    "Vitamine B1 (Thiamine)": "1 mg",
+    "Vitamine B2 (Riboflavine)": "1,4 mg",
+    "Vitamine B3/PP (Niacine)": "15 mg",
+    "Vitamine B6 (Pyridoxine)": "1,2 mg",
+    "Vitamine B9 (Acide folique)": "189 µg",
+    "Vitamine B5 (Acide pantothénique)": "5,7 mg",
+    "Calcium": "502 mg",
+    "Fer": "12 mg",
+    "Fruits‚ légumes‚ noix et huiles de colza‚ noix et olive (estimation par analyse de la liste des ingrédients)": "0%"
+  }
+</product_composition>
+<user_medical_data>diabete</user_medical_data>
+<user_preferences>don't like chocolate</user_preferences>
+Response: "This cereal product provides a good source of whole grains, fiber, protein and several vitamins and minerals. The sugar and fat content are relatively low, making it a suitable choice for diabetes management. As someone with diabetes needs to watch their carbohydrate and sugar intake, the fiber content will help control blood sugar levels. The lack of chocolate also makes it suitable for someone who dislikes chocolate. Overall, this cereal appears to be a nutritious breakfast or snack option for someone with diabetes, as long as it fits within their daily carbohydrate and calorie needs"
+</examples>
+
+Provide recommendation for the following product
+<product_name>Pate à tartiner</product_name>
+<product_composition>
+{
+  "Énergie": "2 252 kj (539 kcal)",
+  "Matières grasses": "30,9 g",
+  "Acides gras saturés": "10,6 g",
+  "Glucides": "57,5 g",
+  "Sucres": "56,3 g",
+  "Fibres alimentaires": "0 g",
+  "Protéines": "6,3 g",
+  "Sel": "0,107 g",
+  "Others": "Fruits‚ légumes‚ noix et huiles de colza‚ noix et olive (estimation par analyse de la liste des ingrédients)	13 %",
+}
+</product_composition>
+Respond with only the recommendation and nothing else.

@@ -1,0 +1,8 @@
+[
+  [ "AWS/Bedrock", "InputTokenCount", "ModelId", "anthropic.claude-instant-v1", { "period": 60, "stat": "Sum", "label": "[InputTokenCount ${PROP('Dim.ModelId')}]", "region": "us-east-1" } ],
+  [ "AWS/Bedrock", "InputTokenCount", "ModelId","stability.stable-diffusion-xl-v1", { "period": 60, "stat": "Sum", "label": "[InputTokenCount ${PROP('Dim.ModelId')}]", "region": "us-east-1" } ],
+  [ "AWS/Bedrock", "InputTokenCount", "ModelId","anthropic.claude-3-sonnet-20240229-v1:0", { "period": 60, "stat": "Sum", "label": "[InputTokenCount ${PROP('Dim.ModelId')}]", "region": "us-east-1" } ],
+  [ "AWS/Bedrock", "OutputTokenCount", "ModelId", "anthropic.claude-instant-v1", { "period": 60, "stat": "Sum", "label": "[OutputTokenCount ${PROP('Dim.ModelId')}]", "region": "us-east-1" } ],
+  [ "AWS/Bedrock", "OutputTokenCount", "ModelId", "stability.stable-diffusion-xl-v1", { "period": 60, "stat": "Sum", "label": "[OutputTokenCount ${PROP('Dim.ModelId')}]", "region": "us-east-1" } ],
+  [ "AWS/Bedrock", "OutputTokenCount", "ModelId", "anthropic.claude-3-sonnet-20240229-v1:0", { "period": 60, "stat": "Sum", "label": "[OutputTokenCount ${PROP('Dim.ModelId')}]", "region": "us-east-1" }]
+]

@@ -1,0 +1,20 @@
+/* Define the pulsating animation */
+@keyframes pulsate {
+  0% {
+    filter: grayscale(100%);
+    opacity: 0.5;
+  }
+  50% {
+    filter: grayscale(50%);
+    opacity: 1;
+  }
+  100% {
+    filter: grayscale(100%);
+    opacity: 0.5;
+  }
+}
+
+/* Apply the animation to the image */
+.pulsate {
+  animation: pulsate 2s infinite;
+}
