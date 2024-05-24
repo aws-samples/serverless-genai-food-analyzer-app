@@ -126,7 +126,7 @@ const RecipeProposal: React.FC<RecipeProposalProps> = ({
     };
 
     fetchData();
-  }, [language, selectedRecipe]);
+  }, [language]);
 
   const anyLoading = loadingStates.some((state) => state);
 
