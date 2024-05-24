@@ -87,8 +87,9 @@ def generate_product_summary_prompt(
         Assistant:"""
 
 def get_bedrock_text_reponse(response):
-    response = json.loads(response.get("body").read())
-    text = response.get("completion")
+    response_body = json.loads(response.get("body").read())
+
+    text = response_body.get("content")[0].get("text")
     
 
     return text
@@ -97,7 +98,7 @@ def get_bedrock_text_reponse(response):
 def query_bedrock(payload, model_id):
     try:
         response = bedrock.invoke_model(
-            body=json.dumps(payload),
+            body=payload,
             modelId=model_id,
             contentType="application/json",
             accept="*/*",
@@ -142,7 +143,7 @@ def get_image(prompt):
     content_type = "application/json"
     model_id = 'stability.stable-diffusion-xl-v1'
 
-    print("Generating image with SDXL model %s", model_id)
+    print("Generating image with SDXL model ", model_id)
 
     response = bedrock.invoke_model(
         body=body, modelId=model_id, accept=accept, contentType=content_type
@@ -226,17 +227,32 @@ def calculate_hash(product_code, user_allergies, user_preference_data,  language
 
 def call_bedrock(prompt_text):
 
-    #print(prompt_text)
-    model_id = "anthropic.claude-instant-v1"
-    model_kwargs_text = {
-        "max_tokens_to_sample": 10000,
+    prompt_config = {
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": 10000,
         "temperature": 0.5,
         "top_p": 0.9,
-        "prompt": prompt_text,
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {
+                    "type": "text",
+                    "text": prompt_text
+                }
+                ],
+            }
+        ],
     }
+
+    body = json.dumps(prompt_config)
+
+    modelId = "anthropic.claude-3-haiku-20240307-v1:0"
+
     response = get_bedrock_text_reponse(
-            query_bedrock(payload=model_kwargs_text, model_id=model_id)
+            query_bedrock(payload=body, model_id=modelId)
     )
+    
     return response
 
 def upload_image_to_s3(image_bytes):
