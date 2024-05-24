@@ -299,7 +299,10 @@ npm run dev
 - Request access to Anthropic Claude models and Stable Diffusion XL on Amazon Bedrock
   - Follow [these steps](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html) to gain access to Claude and SDXL models used in this app
 
+## Resources
 
+- [A Journey into Crafting an Award-Winning Gen-AI Serverless App with AWS](https://www.linkedin.com/feed/update/urn:li:activity:7168621188091469826/)
+- Building a personalized GenAI webapp | Serverless Office Hours [YouTube](https://www.youtube.com/watch?v=D1_ygMC-roc&t=2320s&ab_channel=ServerlessLand) | [Twitch](https://www.twitch.tv/videos/2145622183) | [LinkedIn](https://www.linkedin.com/events/buildingapersonalizedgenaiwebap7194410511076126720/theater/)
 
 ## License
 
