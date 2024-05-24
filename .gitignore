@@ -10,7 +10,8 @@ cdk.out
 
 lib/**/*.js
 bin/*.js
-lambda/**/*.js
+
+!lambda/url_rewrite/*.js 
 resources/ui/public/aws-exports.json
 resources/ui/dist
 
