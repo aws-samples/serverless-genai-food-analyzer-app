@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@aws-cdk/aws-cognito-identitypool-alpha": "^2.139.1-alpha.0",
-    "@aws-cdk/aws-iam": "^1.32.2",
+    "@aws-cdk/aws-iam": "^1.204.0",
     "@aws-sdk/client-bedrock-runtime": "^3.567.0",
     "@aws-sdk/client-dynamodb": "^3.569.0",
     "@aws-sdk/util-dynamodb": "^3.569.0",
