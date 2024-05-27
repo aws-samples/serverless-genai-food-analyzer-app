@@ -5,7 +5,9 @@ import {
   GraphWidgetView,
   LegendPosition,
   Metric,
-  Row, TextWidget
+  Row, TextWidget,
+  SingleValueWidget,
+  IMetric
 } from 'aws-cdk-lib/aws-cloudwatch';
 import {Construct} from "constructs";
 
@@ -66,7 +68,7 @@ export class FoodAnalyzerDashBoard extends Construct {
     })
     dashboard.addWidgets(new Row(bedrocksectionWidget))
 
-    const invocationCountMetrics =  importedBedrockInvocationCountDef.map((metric:(string|CloudWatchMetricImportProps)[])=>{
+    const invocationCountMetrics :IMetric[] =  importedBedrockInvocationCountDef.map((metric:(string|CloudWatchMetricImportProps)[])=>{
       const cloudWatchMetricProps =  metric[4] as CloudWatchMetricImportProps
       return new Metric({
         namespace: metric[0] as string,
@@ -80,17 +82,15 @@ export class FoodAnalyzerDashBoard extends Construct {
         region: cloudWatchMetricProps.region
       })
     })
-    const invocationCountWidget =new GraphWidget({
+    const invocationCountWidget =new SingleValueWidget({
       // ...
       width: 12,
       height: 6,
       title: "Invocation Count",
       region: Stack.of(this).region,
-      liveData: false,
-      view: GraphWidgetView.TIME_SERIES,
-      stacked: false,
-      legendPosition: LegendPosition.RIGHT,
-      right: invocationCountMetrics
+      metrics: invocationCountMetrics,
+      start: "-PT72H",
+      sparkline: true
     });
 
     const inputTokenClaudeSonnet =  importedTokenMetricsDef.map((metric:(string|CloudWatchMetricImportProps)[])=>{
@@ -107,17 +107,15 @@ export class FoodAnalyzerDashBoard extends Construct {
           region: cloudWatchMetricProps.region
         })
     })
-    const tokenCountWidget  = new GraphWidget({
+    const tokenCountWidget  = new SingleValueWidget({
       // ...
       width: 12,
       height: 6,
       title: "Token Counts by Model",
       region: Stack.of(this).region,
-      liveData: false,
-      view: GraphWidgetView.TIME_SERIES,
-      stacked: false,
-      legendPosition: LegendPosition.RIGHT,
-      right: inputTokenClaudeSonnet
+      metrics: inputTokenClaudeSonnet,
+      start: "-PT72H",
+      sparkline: true
     });
 
     dashboard.addWidgets(new Row(invocationCountWidget, tokenCountWidget))
@@ -136,17 +134,15 @@ export class FoodAnalyzerDashBoard extends Construct {
         region: cloudWatchMetricProps.region
       })
     })
-    const invocationPerMinuteWidget = new GraphWidget({
+    const invocationPerMinuteWidget = new SingleValueWidget({
       // ...
       width: 12,
       height: 6,
       title: "Invocation Per Minute",
       region: Stack.of(this).region,
-      liveData: false,
-      view: GraphWidgetView.TIME_SERIES,
-      stacked: false,
-      legendPosition: LegendPosition.RIGHT,
-      right: invocationPerMinuteMetrics
+      metrics: invocationPerMinuteMetrics,
+      start: "-PT72H",
+      sparkline: true
     });
 
     const invocationThrottle =  new Metric({
@@ -158,17 +154,15 @@ export class FoodAnalyzerDashBoard extends Construct {
         region: Stack.of(this).region
       })
 
-    const invocationThrottledWidget = new GraphWidget({
+    const invocationThrottledWidget = new SingleValueWidget({
       // ...
       width: 12,
       height: 6,
       title: "Invocation Throttles",
       region: Stack.of(this).region,
-      liveData: false,
-      view: GraphWidgetView.TIME_SERIES,
-      stacked: false,
-      legendPosition: LegendPosition.RIGHT,
-      right: [invocationThrottle]
+      metrics: [invocationThrottle],
+      start: "-PT72H",
+      sparkline: true
     });
 
     dashboard.addWidgets(new Row(invocationPerMinuteWidget, invocationThrottledWidget))
@@ -186,21 +180,20 @@ export class FoodAnalyzerDashBoard extends Construct {
     dashboard.addWidgets(new Row(lambdaSectionWidget))
     const invokedLambdaMetrics = props.functionList.map((invokedLambda) => {
       return invokedLambda.metricInvocations({
-        period: Duration.seconds(60)
+        period: Duration.days(1),
+        statistic: "Sum"
       })
     })
 
-    const invokedLambdaWidget = new GraphWidget({
+    const invokedLambdaWidget = new SingleValueWidget({
       // ...
       width: 12,
       height: 6,
       title: "Lambda Invocation",
       region: Stack.of(this).region,
-      liveData: false,
-      view: GraphWidgetView.TIME_SERIES,
-      stacked: false,
-      legendPosition: LegendPosition.RIGHT,
-      right: invokedLambdaMetrics
+      metrics: invokedLambdaMetrics,
+      start: "-PT72H",
+      sparkline: true
     });
 
 
