@@ -55,7 +55,7 @@ def upload_image_to_s3(image_bytes):
         s3_key = "img/" + file_name
         s3.put_object(Body=image_data, Bucket=S3_BUCKET_NAME, Key=s3_key)
         list_url_s3.append(f"img/{file_name}")
-        print("Uploaded image:", file_name)
+        logger.debug("Uploaded image:", file_name)
 
     return list_url_s3
 
@@ -80,7 +80,7 @@ def generate_images_recipes(prompt_list:list):
         content_type=content_type
     )
 
-    print("Generating images with SDXL model %s", model_id)
+    logger.debug("Generating images with SDXL model %s", model_id)
     
     
     with concurrent.futures.ThreadPoolExecutor() as executor:

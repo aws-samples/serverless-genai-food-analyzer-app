@@ -103,14 +103,14 @@ def query_bedrock(payload, model_id):
             contentType="application/json",
             accept="*/*",
         )
-        print(response)
+        logger.debug(response)
         input_token_count = response["ResponseMetadata"]["HTTPHeaders"]["x-amzn-bedrock-input-token-count"]
         output_token_count = response["ResponseMetadata"]["HTTPHeaders"]["x-amzn-bedrock-output-token-count"]
         logger.debug("Input_tokens = {}, Output_tokens = {}".format(input_token_count, output_token_count))
 
         return response
     except ClientError as error:
-        print(error.response)
+        logger.error(error.response)
     return None
 
     
@@ -143,7 +143,7 @@ def get_image(prompt):
     content_type = "application/json"
     model_id = 'stability.stable-diffusion-xl-v1'
 
-    print("Generating image with SDXL model ", model_id)
+    logger.debug("Generating image with SDXL model ", model_id)
 
     response = bedrock.invoke_model(
         body=body, modelId=model_id, accept=accept, contentType=content_type
@@ -152,7 +152,7 @@ def get_image(prompt):
 
     base64_image = response_body.get("artifacts")[0].get("base64")
 
-    print("Successfully generated image withvthe SDXL 1.0 model %s", model_id)
+    logger.debug("Successfully generated image withvthe SDXL 1.0 model %s", model_id)
 
     return base64_image
     
@@ -195,7 +195,7 @@ def get_product_from_db(product_code, language):
         else:
             return None, None, None
     except Exception as e:
-        print("Error: get_product_from_db", e)
+        logger.error("Error: get_product_from_db", e)
         return None, None, None
 
 def generate_combined_string(obj):
@@ -264,7 +264,7 @@ def upload_image_to_s3(image_bytes):
 
     s3.put_object(Body=image_bytes, Bucket=S3_BUCKET_NAME, Key=s3_key)
 
-    print("Uploaded image:", file_name)
+    logger.debug("Uploaded image:", file_name)
 
     return f"img/{file_name}"
 
@@ -292,9 +292,9 @@ def put_product_image_to_dynamodb(product_code, params_hash, image_url):
 
 def get_image_url(product_code, params_hash):
     # Get reference to the table
-    print("PRODUCT_SUMMARY_TABLE_NAME="+PRODUCT_SUMMARY_TABLE_NAME)
+    logger.debug("PRODUCT_SUMMARY_TABLE_NAME="+PRODUCT_SUMMARY_TABLE_NAME)
     table = dynamodb.Table(PRODUCT_SUMMARY_TABLE_NAME)
-    print("GET imageUrl, product_code="+product_code+", params_hash="+params_hash)
+    logger.debug("GET imageUrl, product_code="+product_code+", params_hash="+params_hash)
     # Perform a query to retrieve the item
     response = table.get_item(
         Key={
@@ -304,7 +304,7 @@ def get_image_url(product_code, params_hash):
         ConsistentRead=True
         
     )
-    print(response)
+    logger.debug(response)
     # Check if the 'imageUrl' attribute exists in the response
     if 'Item' in response:
         if 'imageUrl' in response['Item']:
@@ -362,7 +362,7 @@ def handler(event, context):
             logger.debug("Product not found in the database")
             raise ProductNotFoundException("Product not found.")
     except Exception as e:
-            print("Error:", e)
+            logger.error("Error:", e)
             return {
             "statusCode": 500,
             "body": json.dumps({"error": "Unwnown error"}),
