@@ -87,7 +87,7 @@ export default function AppConfigured() {
                   padding={`${tokens.space.xl} 0 0 ${tokens.space.xl}`}
                   level={3}
                 >
-                  FoodLens
+                  Food Analyzer
                 </Heading>
               );
             },

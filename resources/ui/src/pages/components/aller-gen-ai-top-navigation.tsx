@@ -22,7 +22,7 @@ export default function AllerGenAITopNavigation() {
     <>
       <TopNavigation
         identity={{
-          title: 'FoodLens',
+          title: 'Food Analyzer',
           href: '/index.html',
         }}
         i18nStrings={{

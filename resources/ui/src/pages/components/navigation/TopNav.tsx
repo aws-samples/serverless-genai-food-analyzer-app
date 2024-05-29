@@ -16,12 +16,8 @@ const TopNav = ({
     <TopNavigation
       identity={{
         href: "#",
-        title: "FoodLens",
+        title: "Food Analyzer",
         onFollow: () => navigate("/"),
-        // logo: {
-        //   src: language === "english" ? flag_en : flag_fr,
-        //   alt: "FoodLens Logo",
-        // },
       }}
       utilities={[
         {
