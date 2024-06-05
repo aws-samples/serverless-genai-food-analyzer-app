@@ -21,7 +21,7 @@ const Recipe: React.FC = () => {
   const webcamRef = useRef<any>();
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [myValue, setMyValue] = useState([]);
-  const [selectedImgSrc, setSelectedImgSrc] = useState(null);
+  const [selectedImgSrc, setSelectedImgSrc] = useState<string | null>(null);
   const [showWebcam, setShowWebcam] = useState(false);
   const [showOptionsButtons, setShowOptionsButtons] = useState(true);
   const [loadingVideoDevices, setLoadingVideoDevices] = useState(false);
@@ -77,7 +77,7 @@ function resizeBase64Image(base64Image: string, width: number, height: number): 
     image.onload = () => {
       try {
         const resizedDataUrl = resizeImage(image, width, height);
-        resolve(resizedDataUrl);
+        resolve(resizedDataUrl as string);
       } catch (error) {
         reject(error);
       }
@@ -158,7 +158,7 @@ function resizeBase64Image(base64Image: string, width: number, height: number): 
       const reader = new FileReader();
       reader.onload = () => {
         const image = new Image();
-        image.src = reader.result;
+        image.src = reader.result as string;
 
         image.onload = () => {
           const resizedImage = resizeImage(image, 400, 400);

@@ -5,11 +5,11 @@
     "food-analyzer-stack": "bin/food-analyzer-stack.js"
   },
   "scripts": {
-    "build": "cd resources/ui && npm install && npx vite build && cd ../..",
+    "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
-    "postinstall": "cd lambda/auth && npm install && cd ../.. && npm run build"
+    "postinstall": "cd lambda/auth && npm install && cd ../.."
   },
   "devDependencies": {
     "@aws-lambda-powertools/logger": "^2.0.3",

@@ -30,7 +30,6 @@ export function Home() {
         <SpaceBetween
           direction="vertical"
           size="xxl"
-          justifyContent="center"
           alignItems="center"
         >
           <Button variant="primary" onClick={() => navigate("/barcode")}>

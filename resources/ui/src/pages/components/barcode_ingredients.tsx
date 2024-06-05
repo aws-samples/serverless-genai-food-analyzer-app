@@ -19,6 +19,11 @@ interface BarcodeIngredientsProps {
   language: string;
 }
 
+interface Additive {
+  label: string;
+  description: any;
+}
+
 const BarcodeIngredients: React.FC<BarcodeIngredientsProps> = ({
   productCode,
   language,
@@ -60,7 +65,7 @@ const BarcodeIngredients: React.FC<BarcodeIngredientsProps> = ({
 
         setProductName(response.product_name);
 
-        const myAdditives = [];
+        const myAdditives:Additive [] = [];
         for (const key in response.additives_description) {
           if (response.additives_description.hasOwnProperty(key)) {
             const value = response.additives_description[key];
