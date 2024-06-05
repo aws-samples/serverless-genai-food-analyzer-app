@@ -14,7 +14,8 @@ import {
   Fn,
   aws_secretsmanager as secretsmanager,
   SecretValue,
-  StackProps,
+  StackProps,  
+  DockerImage,
 } from "aws-cdk-lib";
 import { IFunction, Tracing } from "aws-cdk-lib/aws-lambda";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
@@ -28,6 +29,11 @@ import { FoodAnalyzerDashBoard } from "./dashboard";
 import { Auth } from "./auth";
 import { TableEncryption } from "aws-cdk-lib/aws-dynamodb";
 import { LoadDatabase } from "./load-database-construct";
+import {
+  ExecSyncOptionsWithBufferEncoding,
+  execSync,
+} from "node:child_process";
+import { Utils } from "./utils";
 
 export class FoodAnalyzerStack extends Stack {
   public userPool: IUserPool;
@@ -667,8 +673,45 @@ export class FoodAnalyzerStack extends Stack {
     const appPath = path.join(__dirname, "..", "resources", "ui");
     const buildPath = path.join(appPath, "dist");
 
+    const asset = s3deploy.Source.asset(appPath, {
+      bundling: {
+        image: DockerImage.fromRegistry(
+          "public.ecr.aws/sam/build-nodejs20.x:latest"
+        ),
+        command: [
+          "sh",
+          "-c",
+          [
+            "npm --cache /tmp/.npm install",
+            `npm --cache /tmp/.npm run build`,
+            "cp -aur /asset-input/dist/* /asset-output/",
+          ].join(" && "),
+        ],
+        local: {
+          tryBundle(outputDir: string) {
+            try {
+              const options: ExecSyncOptionsWithBufferEncoding = {
+                stdio: "inherit",
+                env: {
+                  ...process.env,
+                },
+              };
+
+              execSync(`npm --silent --prefix "${appPath}" ci`, options);
+              execSync(`npm --silent --prefix "${appPath}" run build`, options);
+              Utils.copyDirRecursive(buildPath, outputDir);
+            } catch (e) {
+              console.error(e);
+              return false;
+            }
+            return true;
+          },
+        },
+      },
+    });
+
     new s3deploy.BucketDeployment(this, "DeployWebsite", {
-      sources: [s3deploy.Source.asset(buildPath), exportsAsset],
+      sources: [asset, exportsAsset],
       destinationBucket: hostingBucket,
       memoryLimit: 512,
     });

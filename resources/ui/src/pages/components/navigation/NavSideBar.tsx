@@ -4,6 +4,7 @@ import { PROJECT_NAME } from "../../utils/constNames";
 import { useNavigate, useLocation } from "react-router-dom";
 import routes from "./../navigation/constRoutes";
 import { LanguageContext } from "../../app";
+import { SideNavigationProps } from "@cloudscape-design/components/side-navigation";
 
 const header = {
   href: "/",
@@ -18,7 +19,7 @@ const NavSideBar: React.FC = () => {
     title: route.title(language),
   }));
 
-  const items = routesWithLanguageTitles
+  const items:SideNavigationProps.Item [] = routesWithLanguageTitles
     .filter((route) => route.show)
     .map((route) => ({
       type: "link",
