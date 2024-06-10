@@ -238,7 +238,7 @@ export class FoodAnalyzerStack extends Stack {
         environment: {
           POWERTOOLS_SERVICE_NAME: "food-lens",
           POWERTOOLS_LOG_LEVEL: "DEBUG",
-          API_URL: "https://world.openfoodfacts.net",
+          API_URL: "https://world.openfoodfacts.org",
           LANGUAGE: "French",
           PRODUCT_TABLE_NAME: productsTable.tableName,
           OPEN_FOOD_FACTS_TABLE_NAME: openFoodFactsProductsTable.tableName,
