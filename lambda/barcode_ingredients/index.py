@@ -29,7 +29,7 @@ def generate_ingredients_description(ingredients, language):
 
 Extract each ingredient and generate a description for each ingredient to explain it to a 5 years old child. 
 Translate each ingredient name from its original language to {language} and provide the description in {language}.
-Skip the preamble and provide only the response in this XML format:
+Skip the preambule and only the response in the following XML format:
 <ingredients>
     <ingredient>
         <name>{{INGREDIENT}}</name>
@@ -47,7 +47,8 @@ def generate_additives_description(additives, language):
 {additives}
 </additives>
 Extract each additive and generate a description for each additive to explain it to a 5 years old child. 
-Provide the description in {language}, skip the preambule and provide only the response in this XML format:
+Translate each additive name from its original language to {language} and provide the description in {language}.
+Skip the preambule and only the response in the following XML format:
 <additives>
     <additive>
         <name{{ADDITIVE}}</name>
@@ -126,36 +127,35 @@ def make_api_request(product_code):
         logger.error("Error", e)
         raise Exception(error_message)
 
-def call_claude_haiku(prompt_text):
+def call_nova_micro(prompt_text):
 
-    prompt_config = {
-        "anthropic_version": "bedrock-2023-05-31",
-        "max_tokens": 4096,
+    request_body = json.dumps({
+        "inferenceConfig": {
+            "max_new_tokens": 4096
+        },
         "messages": [
             {
                 "role": "user",
                 "content": [
                     {
-                    "type": "text",
-                    "text": prompt_text
-                }
-                ],
+                        "text": prompt_text
+                    }
+                ]
             }
-        ],
-    }
-
-    body = json.dumps(prompt_config)
-
-    modelId = "anthropic.claude-3-haiku-20240307-v1:0"
+        ]
+    })
+    modelId = "amazon.nova-micro-v1:0"
     accept = "application/json"
     contentType = "application/json"
-
     response = bedrock.invoke_model(
-        body=body, modelId=modelId, accept=accept, contentType=contentType
+        body=request_body, modelId=modelId, accept=accept, contentType=contentType
     )
     response_body = json.loads(response.get("body").read())
 
-    results = response_body.get("content")[0].get("text")
+    output = response_body.get("output", {})
+    message = output.get("message", {})
+    content = message.get("content", [])
+    results = content[0].get("text") if content else None
     return results
 
 def clean_text_in_brackets(text):
@@ -207,10 +207,12 @@ def parse_ingredients_description(ingredients, language):
         dict: A dictionary containing ingredient names as keys and their descriptions as values.
     """
     try:
-        xml_ingredients = call_claude_haiku(generate_ingredients_description(ingredients, language))
+        promptIngredients = generate_ingredients_description(ingredients, language)
+        xml_ingredients= call_nova_micro(promptIngredients)
+        xml_content_cleaned = xml_ingredients.replace('```xml\n', '').replace('\n```', '')
         ingredients_and_descriptions = {}
 
-        root = ET.fromstring(xml_ingredients)
+        root = ET.fromstring(xml_content_cleaned)
         for ingredient in root.iter('ingredient'):
             name = clean_text_in_brackets(ingredient.find('name').text)
             description = ingredient.find('description').text
@@ -233,9 +235,11 @@ def parse_additives_description(additives, language):
         dict: A dictionary containing additive names as keys and their descriptions as values.
     """
     try:
-        xml_additives= call_claude_haiku(generate_additives_description(additives, language))
+        promptAdditives = generate_additives_description(additives, language)
+        xml_additives= call_nova_micro(promptAdditives)
+        xml_content_cleaned = xml_additives.replace('```xml\n', '').replace('\n```', '')
         additives_and_descriptions = {}
-        root = ET.fromstring(xml_additives)
+        root = ET.fromstring(xml_content_cleaned)
 
         for additive in root.iter('additive'):
             name = clean_text_in_brackets(additive.find('name').text)

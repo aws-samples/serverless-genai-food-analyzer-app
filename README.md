@@ -60,9 +60,9 @@ The architecture of the application can be split in 4 blocks:
 
 #### Product Summary and Generative Recipe:
 
-- **Implementation**: Using AWS Lambda for server-side logic, Amazon Bedrock as a generative artificial intelligence (GenAI) building platform, Anthropic Claude as Large Language Models (LLM) and Stable Diffusion XL from StabilityAI as diffusion model for generating images.
+- **Implementation**: Using AWS Lambda for server-side logic, Amazon Bedrock as a generative artificial intelligence (GenAI) building platform, Anthropic Claude / Amazon Nova as Large Language Models (LLM), Stable Diffusion XL/ Amazon Nova Canvas from StabilityAI as diffusion model for generating images.
 
-- **AI Model Development**: Choosing the LLM model had an impact on response quality and latency. Ultimately, we chose Anthropic Claude 3 Haiku as a good ratio between latency and quality.
+- **AI Model Development**: Choosing the LLM model had an impact on response quality and latency. Ultimately, we chose Amazon Nova  Micro as a good ratio between latency and quality.
 
 - **AI-Generated Images**: Prompting for an image is very sensitive and was a challenge to generate an image that truly highlights the nutritive features of products. To craft the prompt, we used a first LLM to generate the prompt based on product nutritive features. This technique is similar to a self-querying for vector databases. Using multi-shot prompt-engineering also helped a lot to improve the quality of the prompt.
 
@@ -91,7 +91,7 @@ The architecture of the application can be split in 4 blocks:
 
 - **Strategy**: Acknowledging the diversity of user preferences and dietary needs, our app incorporates a robust personalization feature. Beyond providing raw data, the app aims to educate users about the nutritional implications of their choices.
 
-- **Implementation**: Users feel a sense of ownership and connection as the app tailors its insights to align with their individual health goals and dietary constraints. Incorporating concise and informative content within the app ensures that users understand the significance of various nutritional components. This educational aspect transforms the app into a learning tool, fostering a deeper connection with users seeking to enhance their nutritional literacy.
+- **Implementation**: Users feel a sense of ownership and connection as the app tailors its insights to align with their individual health goals and dietary constraints. We use Amazon Nova Micro on Amazon Bedrock to incorporating concise and informative content within the app ensures that users understand the significance of various nutritional components. This educational aspect transforms the app into a learning tool, fostering a deeper connection with users seeking to enhance their nutritional literacy. We use Amazon Nova Canvas for generating an unbiased image representation highlighting the main ingredients in it.
 
 <p align="center">
   <img src="img/barcode_ingredients_1.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
@@ -188,11 +188,12 @@ The output format is a Markdown file to faciliate the display of the recipe on t
 
 - **Challenge**: The selection of the Language Model (LM) significantly influenced both response latency and quality, posing a critical decision point.
 
-- **Solution**: Following a comprehensive assessment of various models, we've chosen the following Anthropic Claude models for different components within the app:
-  - **Barcode scanning image generation**: Utilizing Stable Diffusion XL.
+- **Solution**: Following a comprehensive assessment of various models, we've chosen the following Anthropic Claude and Amazon Nova models for different components within the app:
+  - **Barcode scanning image generation**: Utilizing Amazon Nova Canvas.
+  - **Product ingredients and Product summaries**: Utilizing Amazon Nova Micro was favored for enhancing user experience by displaying results in streaming mode, and because the output was solely intended for display, enabling us to designate the output type as markdown.
   - **Recipe fridge photograph food aliment detection**: Utilizing Anthropic Claude 3 Sonnet to extract food ingredients from images.
-  - **Recipe proposals, Product ingredients**: Leveraging Anthropic Claude 3 Sonnet. Sonnet was selected for cases where the output needed to be parsed for other tasks or displayed using HTML components.
-  - **Product summary, and recipe steps**: Utilizing Anthropic Claude 3 Haiku was favored for enhancing user experience by displaying results in streaming mode, and because the output was solely intended for display, enabling us to designate the output type as markdown.
+  - **Recipe proposals**: Leveraging Anthropic Claude 3 Sonnet. Sonnet was selected for cases where the output needed to be parsed for other tasks or displayed using HTML components.
+  - **Recipe steps**: Utilizing Anthropic Claude 3 Haiku was favored for enhancing user experience by displaying results in streaming mode, and because the output was solely intended for display, enabling us to designate the output type as markdown.
 
 **Use Lazy Loading to reduce cost/bandwidth**
 
@@ -237,8 +238,8 @@ The output format is a Markdown file to faciliate the display of the recipe on t
 
 **Illustrated Use Cases of the GenAi Application**
 
-- **Text generation** - Amazon Bedrock utilizes Anthropic Claude 3 Haiku to generate the product summary.
-- **Text to image** - Amazon Bedrock utilizes Stable Diffusion XL from StabilityAI to generate an image of the product.
+- **Text generation** - Amazon Bedrock utilizes Amazon Nova Micro and Claude 3 Sonnet to generate the product summary.
+- **Text to image** - Amazon Bedrock utilizes Amazon Nova Canvas and Stable Diffusion XL from StabilityAI to generate an image of the product.
 - **Image to text** - Anthropic Claude 3 Sonnet is leveraged by Amazon Bedrock to identify food elements in the image.
 
 
@@ -264,7 +265,7 @@ Before accessing the application, ensure you've established a user account in Am
 
 #### Access the App
 
-Check the stack outputs for a URL resembling `Food analyzer app.domainName`. Paste this URL into your browser, log in with the previously created user, and start enjoying the app.
+Check the stack outputs for a URL resembling `FoodAnalyzer.domainName = abcde12345.cloudfront.net`. Paste this URL into your browser, log in with the previously created user, and start enjoying the app.
 
 ## Running locally
 
@@ -296,7 +297,7 @@ npm run dev
 
 - [AWS CLI 2+](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html) must be installed on the deployment machine. ([Instructions](https://nodejs.org/en/download/))
 
-- Request access to Anthropic Claude models and Stable Diffusion XL on Amazon Bedrock
+- Request access to Amazon Noval, Anthropic Claude models and Stable Diffusion XL on Amazon Bedrock
   - Follow [these steps](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html) to gain access to Claude and SDXL models used in this app
 
 ## Resources
