@@ -25,6 +25,10 @@ Just scan the barcode with the app for an explained list of ingredients/alergens
 - **Personalized recipe generator**: Capture a photo of the ingredients in your fridge, and the app will generate recipes based on your preferences using those ingredients.
 
 
+## Demo
+![Demo GIF](img/FoodLens.gif)
+
+
 ## Table of Contents
 
 - [Architecture](#architecture)
