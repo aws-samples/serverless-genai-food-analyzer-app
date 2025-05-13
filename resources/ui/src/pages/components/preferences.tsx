@@ -25,90 +25,118 @@ const Preferences: React.FC = () => {
       french: "Œufs",
       italian: "Uova",
       spanish: "Huevos",
+      arabic: "بيض",
     },
     Peanuts: {
       english: "Peanuts",
       french: "Arachides",
       italian: "Arachidi",
       spanish: "Maní",
+      arabic: "فول سوداني",
     },
     Milk: {
       english: "Milk",
       french: "Lait",
       italian: "Latte",
       spanish: "Leche",
+      arabic: "حليب",
     },
-    Soy: { english: "Soy", french: "Soja", italian: "Soia", spanish: "Soja" },
+    Soy: {
+      english: "Soy",
+      french: "Soja",
+      italian: "Soia",
+      spanish: "Soja",
+      arabic: "صويا",
+    },
     Wheat: {
       english: "Wheat",
       french: "Blé",
       italian: "Frumento",
       spanish: "Trigo",
+      arabic: "قمح",
     },
     Fish: {
       english: "Fish",
       french: "Poisson",
       italian: "Pesce",
       spanish: "Pescado",
+      arabic: "سمك",
     },
     Mustard: {
       english: "Mustard",
       french: "Moutarde",
       italian: "Senape",
       spanish: "Mostaza",
+      arabic: "خردل",
     },
     Sulfites: {
       english: "Sulfites",
       french: "Sulfites",
       italian: "Solfiti",
       spanish: "Sulfitos",
+      arabic: "سولفيت",
     },
     Mollusks: {
       english: "Mollusks",
       french: "Mollusques",
       italian: "Molluschi",
       spanish: "Moluscos",
+      arabic: "رخويات",
     },
-    Corn: { english: "Corn", french: "Maïs", italian: "Mais", spanish: "Maíz" },
+    Corn: {
+      english: "Corn",
+      french: "Maïs",
+      italian: "Mais",
+      spanish: "Maíz",
+      arabic: "ذرة",
+    },
     Shellfish: {
       english: "Shellfish",
       french: "Crustacés",
       italian: "Crostacei",
       spanish: "Mariscos",
+      arabic: "قشريات",
     },
     Celery: {
       english: "Celery",
       french: "Céleri",
       italian: "Sedano",
       spanish: "Apio",
+      arabic: "كرفس",
     },
   };
-
+  
   const preferencesList: MultiLanguageData = {
     Vegan: {
       english: "Vegan",
       french: "Végétalien",
       italian: "Vegano",
       spanish: "Vegano",
+      arabic: "نباتي",
     },
     Vegetarian: {
       english: "Vegetarian",
       french: "Végétarien",
       italian: "Vegetariano",
       spanish: "Vegetariano",
+      arabic: "نباتي",
     },
     "Dairy-Free": {
       english: "Dairy-Free",
       french: "Sans produits laitiers",
       italian: "Senza latticini",
       spanish: "Sin lácteos",
+      arabic: "خالي من منتجات الألبان",
     },
     "Less salt": {
       english: "Less salt",
       french: "Moins de sel",
       italian: "Meno sale",
       spanish: "Menos sal",
+      arabic: "ملح أقل",
     },
+
+  
   };
 
   const language = useContext(LanguageContext);
