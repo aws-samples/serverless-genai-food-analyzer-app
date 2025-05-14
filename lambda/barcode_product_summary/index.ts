@@ -11,7 +11,7 @@ const dynamodb = new DynamoDBClient({});
 
 const PRODUCT_TABLE_NAME = process.env.PRODUCT_TABLE_NAME
 const PRODUCT_SUMMARY_TABLE_NAME = process.env.PRODUCT_SUMMARY_TABLE_NAME
-const MODEL_ID = "anthropic.claude-3-haiku-20240307-v1:0"
+const MODEL_ID = "amazon.nova-micro-v1:0"
 
 
 
@@ -98,15 +98,10 @@ function generateProductSummaryPrompt(
   
           Provide recommendation for the following product
           <product_name>${productName}</product_name>
-          <product_ingredients>
-          ${productIngredients}
-          </product_ingredients>
+          <product_ingredients>${productIngredients} </product_ingredients>
           <user_allergies>${userAllergies}</user_allergies>
           <user_preferences>${userPreference}</user_preferences>
           Provide the response in the third person, in ${language}, skip the preambule, disregard any content at the end and provide only the response in this Markdown format:
-
-
-        markdown
 
         Describe potential_health_issues, preference_matter and recommendation here combines in one single short paragraph
 
@@ -220,15 +215,14 @@ async function generateSummary(promptText, responseStream) {
                 role: "user",
                 content: [
                     {
-                        "type": "text",
                         "text": promptText
                     }
                 ]
             }
         ],
-        max_tokens: 500,
-        temperature: 0.5,
-        anthropic_version: "bedrock-2023-05-31"
+        inferenceConfig: {
+            max_new_tokens: 500
+        }
       };
     const params = {
         modelId: MODEL_ID,
@@ -245,17 +239,24 @@ async function generateSummary(promptText, responseStream) {
             for await (const event of events || []) {
                 // Check the top-level field to determine which event this is.
                 if (event.chunk) {
-                  const decoded_event = JSON.parse(
-                    new TextDecoder().decode(event.chunk.bytes),
-                  );
-                  if (decoded_event.type  === 'content_block_delta' && decoded_event.delta.type === 'text_delta'){
-                    responseStream.write(decoded_event.delta.text)
-                    completion += decoded_event.delta.text;
+                  try {
+                        const decoded_event = JSON.parse(
+                            new TextDecoder().decode(event.chunk.bytes),
+                        );
+
+                        if (decoded_event?.contentBlockDelta?.delta?.text) {
+                            const text = decoded_event.contentBlockDelta.delta.text;
+                            responseStream.write(text);
+                            completion += text;
+                        }
+                    } catch (parseError) {
+                        logger.error("Error parsing event:", parseError);
                   }
                 } else {
                   logger.error(`event = ${event}`)
                 }
               }
+              completion = completion.replace('\n```', '')
             
               logger.info('Stream ended!')
         } catch (err) {

@@ -15,9 +15,7 @@ declare global {
       ): Handler;
     }
 }
-
-
-const MODEL_ID = "anthropic.claude-3-haiku-20240307-v1:0"
+const MODEL_ID = "amazon.nova-micro-v1:0"
 
 const tracer = new Tracer();
 const logger = new Logger();
@@ -72,17 +70,14 @@ async function generateRecipeSteps(language: string, recipe, responseStream) {
                 role: "user",
                 content: [
                     {
-                        "type": "text",
-                        "text": promptText
+                        "text": systemPrompt + promptText
                     }
                 ]
             }
         ],
-        max_tokens: 1000,
-        system: systemPrompt,
-        temperature: 0.5,
-        stop_sequences: ['</answer>'],
-        anthropic_version: "bedrock-2023-05-31"
+        inferenceConfig: {
+          max_new_tokens: 500
+        },
       };
     const params = {
         modelId: MODEL_ID,
@@ -164,7 +159,7 @@ async function messageHandler (event, responseStream) {
         const language = body.language;
         const recipe = body.recipe;
         const recipeSteps = await generateRecipeSteps(language, recipe, responseStream);
-        //await putProductSummaryToDynamoDB(productCode, hashValue, productSummary);
+        // await putProductSummaryToDynamoDB(productCode, hashValue, productSummary);
         
     } catch (error) {
         console.error("Error:", error);
