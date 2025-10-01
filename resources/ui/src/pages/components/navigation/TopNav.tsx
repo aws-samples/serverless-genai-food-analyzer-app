@@ -27,6 +27,7 @@ const TopNav = ({
             { id: "english", text: "English" },
             { id: "french", text: "Français" },
             { id: "spanish", text: "Español" },
+            { id: "arabic", text: "عربي" },
           ],
 
           onItemClick: ({ detail }) => {
