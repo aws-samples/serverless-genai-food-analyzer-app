@@ -30,8 +30,8 @@ const InputWithButton = ({ value, onChange, onClick, buttonText }) => {
 };
 
 const isBarcodeValid = (decodedText: string) => {
-  // Regular expression pattern to match EAN-13 barcode or Open Food Facts assigned numbers
-  const barcodePattern = /^(?:\d{13}|200\d{10})$/;
+  // Regular expression pattern to match UPC-A (12 digits), EAN-13 (13 digits), or Open Food Facts assigned numbers
+  const barcodePattern = /^(?:\d{12,13}|200\d{10})$/;
 
   // Test if the decoded text matches the pattern
   return barcodePattern.test(decodedText);
