@@ -231,7 +231,7 @@ export class FoodAnalyzerStack extends Stack {
         handler: "index.handler",
         code: lambda.Code.fromAsset("lambda/barcode_ingredients", {
           bundling: {
-            image: lambda.Runtime.PYTHON_3_12.bundlingImage,
+            image: DockerImage.fromRegistry("public.ecr.aws/sam/build-python3.11:latest"),
             command: [
               "bash", "-c",
               "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"
