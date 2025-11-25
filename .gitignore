@@ -16,3 +16,18 @@ resources/ui/public/aws-exports.json
 resources/ui/dist
 
 .DS_Store
+
+# Lambda bundled dependencies (managed by CDK bundling)
+lambda/*/bin/
+lambda/*/certifi/
+lambda/*/certifi-*.dist-info/
+lambda/*/charset_normalizer/
+lambda/*/charset_normalizer-*.dist-info/
+lambda/*/idna/
+lambda/*/idna-*.dist-info/
+lambda/*/requests/
+lambda/*/requests-*.dist-info/
+lambda/*/urllib3/
+lambda/*/urllib3-*.dist-info/
+lambda/*/__pycache__/
+lambda/*/*.pyc

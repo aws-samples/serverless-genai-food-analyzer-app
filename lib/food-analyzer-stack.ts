@@ -229,7 +229,15 @@ export class FoodAnalyzerStack extends Stack {
       {
         runtime: lambda.Runtime.PYTHON_3_12,
         handler: "index.handler",
-        code: lambda.Code.fromAsset("lambda/barcode_ingredients"),
+        code: lambda.Code.fromAsset("lambda/barcode_ingredients", {
+          bundling: {
+            image: lambda.Runtime.PYTHON_3_12.bundlingImage,
+            command: [
+              "bash", "-c",
+              "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"
+            ],
+          },
+        }),
         memorySize: 10240,
         role: lambdaRole,
         layers: [powerToolsLayer],
