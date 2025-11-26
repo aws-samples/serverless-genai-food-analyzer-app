@@ -62,21 +62,23 @@ export class FoodAnalyzerStack extends Stack {
       }:094274105915:layer:AWSLambdaPowertoolsTypeScriptV2:2`
     );
 
-    const boto3Layer = lambda.LayerVersion.fromLayerVersionArn(
-      this,
-      "boto3-layer",
-      `arn:aws:lambda:${
-        Stack.of(this).region
-      }:770693421928:layer:Klayers-p312-boto3:5`
-    );
+    // boto3 and requests are included in Python 3.12 runtime by default
+    // const boto3Layer = lambda.LayerVersion.fromLayerVersionArn(
+    //   this,
+    //   "boto3-layer",
+    //   `arn:aws:lambda:${
+    //     Stack.of(this).region
+    //   }:770693421928:layer:Klayers-p312-boto3:5`
+    // );
 
-    const requestsLayer = lambda.LayerVersion.fromLayerVersionArn(
-      this,
-      "requests-layer",
-      `arn:aws:lambda:${
-        Stack.of(this).region
-      }:770693421928:layer:Klayers-p38-requests-html:23`
-    );
+    // requests-html requires additional dependencies, using PowerTools only
+    // const requestsLayer = lambda.LayerVersion.fromLayerVersionArn(
+    //   this,
+    //   "requests-layer",
+    //   `arn:aws:lambda:${
+    //     Stack.of(this).region
+    //   }:017000801446:layer:AWSLambdaPowertoolsPythonV2-Extras:56`
+    // );
 
     const openFoodFactsProductsTable = new dynamodb.Table(this, "allProductsOpenFoodFactsTable", {
       partitionKey: {
@@ -227,10 +229,18 @@ export class FoodAnalyzerStack extends Stack {
       {
         runtime: lambda.Runtime.PYTHON_3_12,
         handler: "index.handler",
-        code: lambda.Code.fromAsset("lambda/barcode_ingredients"),
+        code: lambda.Code.fromAsset("lambda/barcode_ingredients", {
+          bundling: {
+            image: DockerImage.fromRegistry("public.ecr.aws/sam/build-python3.11:latest"),
+            command: [
+              "bash", "-c",
+              "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"
+            ],
+          },
+        }),
         memorySize: 10240,
         role: lambdaRole,
-        layers: [powerToolsLayer, boto3Layer, requestsLayer],
+        layers: [powerToolsLayer],
         tracing: Tracing.ACTIVE,
         timeout: Duration.minutes(5),
         logRetention: RetentionDays.ONE_WEEK,
@@ -289,7 +299,7 @@ export class FoodAnalyzerStack extends Stack {
         code: lambda.Code.fromAsset("lambda/recipe_image_ingredients"),
         memorySize: 10240,
         role: lambdaRole,
-        layers: [powerToolsLayer, boto3Layer],
+        layers: [powerToolsLayer],
         tracing: Tracing.ACTIVE,
         timeout: Duration.minutes(5),
         logRetention: RetentionDays.ONE_WEEK,
@@ -334,7 +344,7 @@ export class FoodAnalyzerStack extends Stack {
         code: lambda.Code.fromAsset("lambda/recipe_proposals"),
         memorySize: 10240,
         role: lambdaRole,
-        layers: [powerToolsLayer, boto3Layer],
+        layers: [powerToolsLayer],
         tracing: Tracing.ACTIVE,
         timeout: Duration.minutes(5),
         logRetention: RetentionDays.ONE_WEEK,
@@ -379,7 +389,7 @@ export class FoodAnalyzerStack extends Stack {
       memorySize: 10240, // 10240 MB
       timeout: Duration.minutes(5),
       role: basicLambdaRole,
-      layers: [powerToolsLayer, boto3Layer],
+      layers: [powerToolsLayer],
       environment: {
         POWERTOOLS_SERVICE_NAME: "food-lens",
         POWERTOOLS_LOG_LEVEL: "DEBUG",
