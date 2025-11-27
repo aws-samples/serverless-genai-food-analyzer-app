@@ -126,33 +126,35 @@ def get_image(prompt):
     """
 
     body=json.dumps({
-        "text_prompts": [
-        {
-        "text": prompt
+        "taskType": "TEXT_IMAGE",
+        "textToImageParams": {
+            "text": f"{prompt}, professional food photography, studio lighting, clean composition, high resolution, editorial quality, commercial product photography style"
+        },
+        "imageGenerationConfig": {
+            "numberOfImages": 1,
+            "quality": "premium",
+            "height": 1024,
+            "width": 1024,
+            "cfgScale": 8.0,
+            "seed": 0
         }
-    ],
-    "cfg_scale": 10,
-    "seed": 0,
-    "steps": 35,
-    "samples" : 1,
-    "style_preset" : "photographic"
     })
 
    
     accept = "application/json"
     content_type = "application/json"
-    model_id = 'stability.stable-diffusion-xl-v1'
+    model_id = 'amazon.nova-canvas-v1:0'
 
-    logger.debug("Generating image with SDXL model ", model_id)
+    logger.debug(f"Generating image with Nova Canvas model {model_id}")
 
     response = bedrock.invoke_model(
         body=body, modelId=model_id, accept=accept, contentType=content_type
     )
     response_body = json.loads(response.get("body").read())
 
-    base64_image = response_body.get("artifacts")[0].get("base64")
+    base64_image = response_body.get("images")[0]
 
-    logger.debug("Successfully generated image withvthe SDXL 1.0 model %s", model_id)
+    logger.debug("Successfully generated image with Nova Canvas model %s", model_id)
 
     return base64_image
     

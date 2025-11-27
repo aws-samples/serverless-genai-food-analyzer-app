@@ -64,11 +64,11 @@ The architecture of the application can be split in 4 blocks:
 
 #### Product Summary and Generative Recipe:
 
-- **Implementation**: Using AWS Lambda for server-side logic, Amazon Bedrock as a generative artificial intelligence (GenAI) building platform, Anthropic Claude as Large Language Models (LLM) and Stable Diffusion XL from StabilityAI as diffusion model for generating images.
+- **Implementation**: Using AWS Lambda for server-side logic, Amazon Bedrock as a generative artificial intelligence (GenAI) building platform, Anthropic Claude as Large Language Models (LLM) and Amazon Nova Canvas for generating images.
 
 - **AI Model Development**: Choosing the LLM model had an impact on response quality and latency. Ultimately, we chose Anthropic Claude 3 Haiku as a good ratio between latency and quality.
 
-- **AI-Generated Images**: Prompting for an image is very sensitive and was a challenge to generate an image that truly highlights the nutritive features of products. To craft the prompt, we used a first LLM to generate the prompt based on product nutritive features. This technique is similar to a self-querying for vector databases. Using multi-shot prompt-engineering also helped a lot to improve the quality of the prompt.
+- **AI-Generated Images**: Prompting for an image is very sensitive and was a challenge to generate an image that truly highlights the nutritive features of products. To craft the prompt, we used a first LLM to generate the prompt based on product nutritive features. This technique is similar to a self-querying for vector databases. Using multi-shot prompt-engineering also helped a lot to improve the quality of the prompt. Images are generated using Amazon Nova Canvas.
 
 
 
@@ -164,7 +164,7 @@ Each recipe must also respect the user's dietary restrictions and allergies.
 }
 ```
 
-- **Image Generation**: Once we have the recipe title and description, we use Stable Diffusion to generate the image of the recipe. We generate images in parallel to reduce the latency of the response.
+- **Image Generation**: Once we have the recipe title and description, we use Amazon Nova Canvas to generate the image of the recipe. We generate images in parallel to reduce the latency of the response.
 
 
 
@@ -193,7 +193,7 @@ The output format is a Markdown file to faciliate the display of the recipe on t
 - **Challenge**: The selection of the Language Model (LM) significantly influenced both response latency and quality, posing a critical decision point.
 
 - **Solution**: Following a comprehensive assessment of various models, we've chosen the following Anthropic Claude models for different components within the app:
-  - **Barcode scanning image generation**: Utilizing Stable Diffusion XL.
+  - **Barcode scanning image generation**: Utilizing Amazon Nova Canvas.
   - **Recipe fridge photograph food aliment detection**: Utilizing Anthropic Claude 3 Sonnet to extract food ingredients from images.
   - **Recipe proposals, Product ingredients**: Leveraging Anthropic Claude 3 Sonnet. Sonnet was selected for cases where the output needed to be parsed for other tasks or displayed using HTML components.
   - **Product summary, and recipe steps**: Utilizing Anthropic Claude 3 Haiku was favored for enhancing user experience by displaying results in streaming mode, and because the output was solely intended for display, enabling us to designate the output type as markdown.
@@ -242,7 +242,7 @@ The output format is a Markdown file to faciliate the display of the recipe on t
 **Illustrated Use Cases of the GenAi Application**
 
 - **Text generation** - Amazon Bedrock utilizes Anthropic Claude 3 Haiku to generate the product summary.
-- **Text to image** - Amazon Bedrock utilizes Stable Diffusion XL from StabilityAI to generate an image of the product.
+- **Text to image** - Amazon Bedrock utilizes Amazon Nova Canvas to generate an image of the product.
 - **Image to text** - Anthropic Claude 3 Sonnet is leveraged by Amazon Bedrock to identify food elements in the image.
 
 
@@ -300,8 +300,6 @@ npm run dev
 
 - [AWS CLI 2+](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html) must be installed on the deployment machine. ([Instructions](https://nodejs.org/en/download/))
 
-- Request access to Anthropic Claude models and Stable Diffusion XL on Amazon Bedrock
-  - Follow [these steps](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html) to gain access to Claude and SDXL models used in this app
 
 ## Resources
 
