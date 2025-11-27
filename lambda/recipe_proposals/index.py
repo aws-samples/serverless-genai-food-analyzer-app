@@ -27,23 +27,25 @@ logger = Logger()
 
 def call_bedrock_thread(prompt, model_id, accept, content_type):
     body=json.dumps({
-        "text_prompts": [
-        {
-        "text": f"Close up picture of tasty {prompt}"
+        "taskType": "TEXT_IMAGE",
+        "textToImageParams": {
+            "text": f"Professional food photography of {prompt}, styled for cookbook, natural lighting, shallow depth of field, appetizing presentation on elegant plate, high resolution, culinary magazine quality"
+        },
+        "imageGenerationConfig": {
+            "numberOfImages": 1,
+            "quality": "premium",
+            "height": 1024,
+            "width": 1024,
+            "cfgScale": 8.0,
+            "seed": 0
         }
-    ],
-    "cfg_scale": 10,
-    "seed": 0,
-    "steps": 35,
-    "samples" : 1,
-    "style_preset" : "photographic"
     })
 
     response = bedrock_rt.invoke_model(
         body=body, modelId=model_id, accept=accept, contentType=content_type
     )
     response_body = json.loads(response.get("body").read())
-    base64_image = response_body.get("artifacts")[0].get("base64")
+    base64_image = response_body.get("images")[0]
     return base64_image
 
 def upload_image_to_s3(image_bytes):
@@ -71,7 +73,7 @@ def generate_images_recipes(prompt_list:list):
    
     accept = "application/json"
     content_type = "application/json"
-    model_id = 'stability.stable-diffusion-xl-v1'
+    model_id = 'amazon.nova-canvas-v1:0'
     
     partial_generate_image = partial(
         call_bedrock_thread,
@@ -80,7 +82,7 @@ def generate_images_recipes(prompt_list:list):
         content_type=content_type
     )
 
-    logger.debug("Generating images with SDXL model {}".format(model_id))
+    logger.debug(f"Generating images with Nova Canvas model {model_id}")
     
     
     with concurrent.futures.ThreadPoolExecutor() as executor:
