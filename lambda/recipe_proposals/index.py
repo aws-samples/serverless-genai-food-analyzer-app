@@ -29,7 +29,8 @@ def call_bedrock_thread(prompt, model_id, accept, content_type):
     body=json.dumps({
         "taskType": "TEXT_IMAGE",
         "textToImageParams": {
-            "text": f"Professional food photography of {prompt}, styled for cookbook, natural lighting, shallow depth of field, appetizing presentation on elegant plate, high resolution, culinary magazine quality"
+            "text": f"Professional food photography of {prompt}, styled for cookbook, natural lighting, shallow depth of field, appetizing presentation on elegant plate, high resolution, culinary magazine quality",
+            "negativeText": "text, words, letters, labels, writing, typography, captions, watermarks, logos, signs, numbers, alphabet"
         },
         "imageGenerationConfig": {
             "numberOfImages": 1,
