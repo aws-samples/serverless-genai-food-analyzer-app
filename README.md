@@ -237,6 +237,19 @@ The output format is a Markdown file to faciliate the display of the recipe on t
   
   A custom `DecimalEncoder` handles DynamoDB Decimal type serialization to JSON, ensuring proper data formatting in API responses.
 
+**Dietary Labels and Religious Requirements**
+
+- **Challenge**: Accurately identifying vegan, vegetarian, halal, and kosher products without relying solely on ingredient text parsing.
+
+- **Solution**: Integrated `labels_tags` and `categories` fields from Open Food Facts API. The app now provides:
+  - Direct vegan/vegetarian detection from product labels
+  - Halal and kosher certification identification
+  - Category-based product context for better recommendations
+  - Religious requirement matching with clear certification status
+  - Fallback to ingredient analysis when labels are unavailable
+  
+  This reduces LLM hallucination and provides more confident dietary and religious compatibility assessments.
+
 
 
 ## Key Technical Features

@@ -108,7 +108,7 @@ def make_api_request(product_code):
     api_url = os.environ.get('API_URL')
     url = f'{api_url}/api/v2/product/{product_code}'
     headers = {'Accept': 'application/json'}
-    fixed_params = {'fields': 'ingredients_text,additives_tags,product_name,allergens_tags,nutriments'}
+    fixed_params = {'fields': 'ingredients_text,additives_tags,product_name,allergens_tags,nutriments,labels_tags,categories'}
     full_url = f'{url}?{urllib.parse.urlencode(fixed_params)}'
     logger.debug("Calling the API to get the product informations")
 
@@ -299,8 +299,8 @@ def get_product_from_db(product_code, language):
         product_code (str): The code of the product to retrieve information for.
 
     Returns:
-        tuple: A tuple containing product name, ingredients, additives, allergens, and nutriments if the product is found in the database;
-               otherwise, returns (None, None, None, None, None).
+        tuple: A tuple containing product name, ingredients, additives, allergens, nutriments, labels, and categories if the product is found in the database;
+               otherwise, returns (None, None, None, None, None, None, None).
     """
 
     table = dynamodb.Table(PRODUCT_TABLE_NAME)
@@ -320,19 +320,21 @@ def get_product_from_db(product_code, language):
             additives = item.get('additives')
             allergens = item.get('allergens_tags', [])
             nutriments = item.get('nutriments', {})
+            labels = item.get('labels_tags', [])
+            categories = item.get('categories', '')
             
             # Check if either ingredients or additives don't exist, then return None
             if ingredients is None or additives is None:
-                return None, None, None, None, None
-            return product_name, ingredients, additives, allergens, nutriments
+                return None, None, None, None, None, None, None
+            return product_name, ingredients, additives, allergens, nutriments, labels, categories
         else:
-            return None, None, None, None, None
+            return None, None, None, None, None, None, None
     except Exception as e:
         logger.error("Error while getting the Product from database", e)
-        return None, None, None, None, None
+        return None, None, None, None, None, None, None
 
 @tracer.capture_method
-def write_product_to_db(product_code, language, product_name, ingredients, additives, allergens, nutriments):
+def write_product_to_db(product_code, language, product_name, ingredients, additives, allergens, nutriments, labels, categories):
     """
     Writes product information product table.
 
@@ -343,6 +345,8 @@ def write_product_to_db(product_code, language, product_name, ingredients, addit
         additives (list): The list of additives of the product.
         allergens (list): The list of allergens tags.
         nutriments (dict): The filtered nutriments data.
+        labels (list): The list of labels tags.
+        categories (str): The product categories.
 
     Returns:
         None
@@ -370,6 +374,14 @@ def write_product_to_db(product_code, language, product_name, ingredients, addit
         # Only add nutriments if dict is not empty
         if nutriments and len(nutriments) > 0:
             item['nutriments'] = nutriments
+            
+        # Only add labels if list is not empty
+        if labels and len(labels) > 0:
+            item['labels_tags'] = labels
+            
+        # Only add categories if not empty
+        if categories:
+            item['categories'] = categories
 
         # Write item to DynamoDB table
         response = table.put_item(Item=item)
@@ -424,8 +436,8 @@ def fetch_new_product(product_code, language):
         product_code (str): The code of the product to fetch.
 
     Returns:
-        tuple: A tuple containing dictionaries of ingredients, additives, allergens, nutriments, and product name,
-               if the product information is successfully fetched from the API; otherwise, returns (None, None, None, None, None).
+        tuple: A tuple containing dictionaries of ingredients, additives, allergens, nutriments, labels, categories, and product name,
+               if the product information is successfully fetched from the API; otherwise, returns (None, None, None, None, None, None, None).
     """
 
     response_data = get_product_from_open_food_facts_db(product_code)
@@ -438,6 +450,8 @@ def fetch_new_product(product_code, language):
         additives=[]
         allergens=[]
         nutriments={}
+        labels=[]
+        categories=''
         
         if 'product' not in response_data or 'ingredients_text' not in response_data['product']:
             raise ValueError("Missing ingredients in Open Food Facts API. Unable to generate a personalized summary for this product.")
@@ -462,11 +476,19 @@ def fetch_new_product(product_code, language):
         # Extract and filter nutriments
         if 'product' in response_data and 'nutriments' in response_data['product']:
             nutriments = filter_nutriments(response_data['product']['nutriments'])
+            
+        # Extract labels
+        if 'product' in response_data and 'labels_tags' in response_data['product']:
+            labels = response_data['product']['labels_tags']
+            
+        # Extract categories
+        if 'product' in response_data and 'categories' in response_data['product']:
+            categories = response_data['product']['categories']
 
-        return response_ingredients, response_additives, product_name, allergens, nutriments
+        return response_ingredients, response_additives, product_name, allergens, nutriments, labels, categories
 
     else:
-        return None, None, None, None, None
+        return None, None, None, None, None, None, None
 
 @logger.inject_lambda_context(log_event=True)
 @tracer.capture_lambda_handler
@@ -477,18 +499,18 @@ def handler(event, context):
         product_code = fields[1]
         language = fields[2]
         logger.debug("ProductCode="+product_code)
-        product_name, response_ingredients, response_additives, allergens, nutriments = get_product_from_db(product_code, language)
+        product_name, response_ingredients, response_additives, allergens, nutriments, labels, categories = get_product_from_db(product_code, language)
         
         if product_name is not None:        
             logger.debug("Product found in the database")
         else:
             logger.debug("Product not found in the database")
 
-            response_ingredients, response_additives, product_name, allergens, nutriments = fetch_new_product(product_code, language)
+            response_ingredients, response_additives, product_name, allergens, nutriments, labels, categories = fetch_new_product(product_code, language)
             
             
             if  response_ingredients is not None:
-                write_product_to_db(product_code, language, product_name, response_ingredients, response_additives, allergens, nutriments)
+                write_product_to_db(product_code, language, product_name, response_ingredients, response_additives, allergens, nutriments, labels, categories)
 
             if(response_ingredients is None):
                 response_ingredients = {"Ingredients Generation Error": "Description Generation Unavailable"}                
@@ -500,6 +522,8 @@ def handler(event, context):
                 "product_name": product_name,
                 "allergens_tags": allergens,
                 "nutriments": nutriments,
+                "labels_tags": labels,
+                "categories": categories,
         }
 
         logger.debug("Response", extra=response)
