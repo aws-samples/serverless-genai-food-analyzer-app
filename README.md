@@ -20,7 +20,7 @@ We developed this exhibit to create an interactive serverless application using 
 ## Features overview
 
 - **Personalized product information**: Curious about what is in a product and if it is good for you?
-Just scan the barcode with the app for an explained list of ingredients/alergens and a personalized summary based on your preferences.
+Just scan the barcode with the app for an explained list of ingredients/allergens and a personalized summary based on your preferences, health goals, and dietary restrictions. The app provides direct allergen detection and quantitative nutritional analysis using data from Open Food Facts.
 
 - **Personalized recipe generator**: Capture a photo of the ingredients in your fridge, and the app will generate recipes based on your preferences using those ingredients.
 
@@ -61,6 +61,8 @@ The architecture of the application can be split in 4 blocks:
 #### Product Management:
 
 - **Implementation**: Using AWS Lambda for server-side logic and a database from [Open Food Facts](https://fr.openfoodfacts.org/) accessed through APIs.
+- **Data Integration**: The app retrieves allergen tags and nutritional data (calories, sugars, fats, proteins, etc.) from Open Food Facts API for accurate, data-driven recommendations.
+- **Safety Features**: Direct allergen detection from API data ensures reliable allergen warnings without relying solely on ingredient text parsing.
 
 #### Product Summary and Generative Recipe:
 
@@ -222,6 +224,18 @@ The output format is a Markdown file to faciliate the display of the recipe on t
 - **Challenge**: Present the application in multiple languages
 
 - **Solution**: The same prompt is utilized, but the LLM is instructed to generate the output in a specific language, catering to the user's language preference (English/French).
+
+**Direct Allergen Detection and Nutritional Analysis**
+
+- **Challenge**: Ensuring accurate allergen warnings and providing quantitative nutritional recommendations based on user health goals.
+
+- **Solution**: Integrated Open Food Facts API to retrieve `allergens_tags` and `nutriments` fields. The app filters key nutritional data (calories, sugars, fats, proteins, salt, fiber) and stores them in DynamoDB. Product summaries now include:
+  - Direct allergen detection with prominent warnings
+  - Specific nutritional values (e.g., "539 kcal/100g", "56.3g sugars")
+  - Health goal-specific recommendations (weight loss, muscle gain, etc.)
+  - Dietary preference compatibility (keto, low carb, low sodium)
+  
+  A custom `DecimalEncoder` handles DynamoDB Decimal type serialization to JSON, ensuring proper data formatting in API responses.
 
 
 
