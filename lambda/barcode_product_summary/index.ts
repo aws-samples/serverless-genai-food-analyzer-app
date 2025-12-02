@@ -86,9 +86,9 @@ function generateProductSummaryPrompt(
         nutrimentInfo += '</nutrition_per_100g>\n';
     }
     
-    // Format allergens
+    // Format allergens - only if user has allergies
     let allergenInfo = '';
-    if (productAllergens && productAllergens.length > 0) {
+    if (userAllergies && productAllergens && productAllergens.length > 0) {
         allergenInfo = `\n<product_allergens>${productAllergens.join(', ')}</product_allergens>\n`;
     }
     
@@ -104,27 +104,51 @@ function generateProductSummaryPrompt(
         categoryInfo = `\n<product_categories>${productCategories}</product_categories>\n`;
     }
     
-    return `Human:
-          You are a nutrition expert with the task to provide recommendations about a specific product for the user based on the user's allergies, health goals, dietary preferences, and religious requirements. 
-          Your task involves the following steps:
+    // Build instructions based on what user has set
+    let instructions = `You are a nutrition expert providing recommendations about a specific product.
 
-          1. CRITICAL: Check if any product allergens match the user's allergies. If there is a match, prominently warn the user at the beginning of your response.
-          2. Check if product labels match dietary preferences (vegan, vegetarian) or religious requirements (halal, kosher). If labels are present, use them for direct matching. If not, analyze categories and ingredients.
-          3. Use the nutritional data to assess if the product aligns with the user's health goal (weight loss, muscle gain, maintain weight, or general health).
-          4. Use the user's dietary preferences to ensure the product is compatible (e.g., keto, low carb, low fat, low sodium, vegan, vegetarian).
-          5. Use product categories to provide better context about the product type and dietary compatibility.
-          6. Present three benefits and three disadvantages for the product, ensuring that each list consists of precisely three points.
-          7. Provide specific nutritional recommendations based on the actual nutritional values and the user's needs.
-  
-          If the user's information is not provided or is empty, offer general nutritional advice based on the product's nutritional data.
+    Your task:
+    `;
+    
+    if (userAllergies) {
+        instructions += `1. CRITICAL: Check if any product allergens match the user's allergies (${userAllergies}). If there is a match, prominently warn the user.\n`;
+    }
+    
+    if (userPreference) {
+        instructions += `${userAllergies ? '2' : '1'}. Check if product labels match dietary preferences (${userPreference}). Use labels for direct matching, or analyze categories and ingredients.\n`;
+    }
+    
+    if (userHealthGoal) {
+        instructions += `${(userAllergies ? 1 : 0) + (userPreference ? 1 : 0) + 1}. Use nutritional data to assess if the product aligns with the health goal: ${userHealthGoal}.\n`;
+    }
+    
+    if (userReligion) {
+        instructions += `${(userAllergies ? 1 : 0) + (userPreference ? 1 : 0) + (userHealthGoal ? 1 : 0) + 1}. Check if product labels match religious requirement: ${userReligion}.\n`;
+    }
+    
+    instructions += `- Present three nutritional benefits and three nutritional disadvantages for the product based on actual nutritionalvalues.
+    If the user's information is not provided or is empty, offer general nutritional advice based on the product's nutritional data.
+    IMPORTANT: Only mention allergens, dietary preferences, health goals, or religious requirements if the user has specified them. Do not discuss aspects the user hasn't set.`;
+    
+    let userContext = '';
+    if (userAllergies) userContext += `\n<user_allergies>${userAllergies}</user_allergies>`;
+    if (userHealthGoal) userContext += `\n<user_health_goal>${userHealthGoal}</user_health_goal>`;
+    if (userPreference) userContext += `\n<user_dietary_preferences>${userPreference}</user_dietary_preferences>`;
+    if (userReligion) userContext += `\n<user_religious_requirement>${userReligion}</user_religious_requirement>`;
+    
+    return `Human:
+          ${instructions}
   
           Provide recommendation for the following product:
-          <product_name>${productName}</product_name>
-          <product_ingredients>${productIngredients}</product_ingredients>${allergenInfo}${labelInfo}${categoryInfo}${nutrimentInfo}
-          <user_allergies>${userAllergies}</user_allergies>
-          <user_health_goal>${userHealthGoal}</user_health_goal>
-          <user_dietary_preferences>${userPreference}</user_dietary_preferences>
-          <user_religious_requirement>${userReligion}</user_religious_requirement>
+            <product_name>${productName}</product_name>
+            <product_ingredients>${productIngredients}</product_ingredients>
+            <allergenInfo>${allergenInfo}</allergenInfo>
+            <labelInfo>${labelInfo}</labelInfo>
+            <categoryInfo>${categoryInfo}</categoryInfo>
+            <nutrimentInfo>${nutrimentInfo}</nutrimentInfo>
+
+          For the user:
+            ${userContext}
           
           Provide the response in the third person, in ${language}, skip the preambule, disregard any content at the end and provide only the response in this Markdown format:
 
