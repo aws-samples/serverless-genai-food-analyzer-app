@@ -212,7 +212,7 @@ async function getProductSummary(productCode: string, paramsHash: string): Promi
     }
 }
 
-async function generateSummary(promptText, responseStream) {
+async function generateSummary(promptText: string, responseStream: NodeJS.WritableStream) {
 
     const payload = {
         messages: [
@@ -270,7 +270,7 @@ async function generateSummary(promptText, responseStream) {
     return completion;
 }
 
-async function simulateSummaryStreaming(content: string, responseStream): Promise<void> {
+async function simulateSummaryStreaming(content: string, responseStream: NodeJS.WritableStream): Promise<void> {
    
     const chunks = [];
     let remainingContent = content;
@@ -317,7 +317,7 @@ async function putProductSummaryToDynamoDB(product_code: string, params_hash: st
     }
 }
 
-async function messageHandler (event, responseStream) {
+async function messageHandler (event: APIGatewayProxyEventV2, responseStream: NodeJS.WritableStream) {
 
     try {
         logger.info(event as any);
