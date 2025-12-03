@@ -423,7 +423,7 @@ export class FoodAnalyzerStack extends Stack {
           __dirname,
           "../lambda/barcode_product_summary/index.ts"
         ),
-        runtime: lambda.Runtime.NODEJS_22_X,
+        runtime: lambda.Runtime.NODEJS_24_X,
         role: basicLambdaRole,
         timeout: Duration.minutes(10),
         layers: [powerToolsTypeScriptLayer],
@@ -447,7 +447,7 @@ export class FoodAnalyzerStack extends Stack {
       "recipeStepByStepFunction",
       {
         entry: path.join(__dirname, "../lambda/recipe_step_by_step/index.ts"),
-        runtime: lambda.Runtime.NODEJS_22_X,
+        runtime: lambda.Runtime.NODEJS_24_X,
         role: basicLambdaRole,
         timeout: Duration.minutes(10),
         layers: [powerToolsTypeScriptLayer],
@@ -543,7 +543,7 @@ export class FoodAnalyzerStack extends Stack {
       `AuthFunctionAtEdge`,
       {
         handler: "index.handler",
-        runtime: lambda.Runtime.NODEJS_22_X,
+        runtime: lambda.Runtime.NODEJS_24_X,
         code: lambda.Code.fromAsset(path.join(__dirname, "../lambda/auth")),
       }
     );

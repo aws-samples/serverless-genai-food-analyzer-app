@@ -295,10 +295,18 @@ npm run dev
 
 ## Requirements
 
+- [Node.js 18+](https://nodejs.org/en/) must be installed on the deployment machine. ([Instructions](https://nodejs.org/en/download/))
 
-- [Node JS 18+](https://nodejs.org/en/) must be installed on the deployment machine. ([Instructions](https://nodejs.org/en/download/))
+- [AWS CLI 2+](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html) must be installed on the deployment machine. ([Instructions](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html))
 
-- [AWS CLI 2+](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html) must be installed on the deployment machine. ([Instructions](https://nodejs.org/en/download/))
+## Runtime Versions
+
+The application uses the following AWS Lambda runtimes:
+
+- **Node.js 24.x** - For TypeScript Lambda functions (product summary, recipe steps, authentication)
+- **Python 3.12** - For Python Lambda functions (barcode scanning, image analysis, recipe generation)
+
+The Node.js functions were upgraded to Node.js 24 in December 2025 to leverage the latest features including improved HTTP performance (Undici 7), explicit resource management, and enhanced async context handling. See [NODEJS_24_UPGRADE.md](./NODEJS_24_UPGRADE.md) for details.
 
 
 ## Resources
