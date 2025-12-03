@@ -24,8 +24,8 @@ def generate_product_summary_prompt(
 ):
     return f"""Human:
         You are a nutrition expert. I will give you a nutritional list of a product, as sold per 100 g / 100 ml.
-        What, in your opinion, is the most unhealthy component? You must imagine the quantity of the most unhealthy component in terms of the quotient so that I realize how bad it is.
-        Respond in the form of a prompt in English, which will be used to generate an image in English. Respond only with the prompt.
+        What, in your opinion, is the most notable nutritional characteristic? Create a visual representation using actual food items or ingredients.
+        Respond in the form of a prompt in English for image generation. The prompt should describe a clean, professional food photography scene WITHOUT any text, labels, or words visible in the image.
         -----------------------------------
         Example 1:  
         Nutritional list:
@@ -41,7 +41,7 @@ def generate_product_summary_prompt(
             "salt_100g": "0,107 g"
         
         Response: 
-         A jar of chocolate hazelnut spread next to 14 cubes of sugar labeled "diabetes danger".
+         A jar of chocolate hazelnut spread surrounded by sugar cubes and hazelnuts on a white background, professional food photography, no text or labels visible.
         
         -------------------------------------
         Example 2:
@@ -59,7 +59,7 @@ def generate_product_summary_prompt(
                 "proteins_100g": "12,5",
                 "salt_100g": "1,02"
 
-        Response: "an hamburger and an evil teaspoon full of salt"
+        Response: A hamburger with a small pile of salt crystals beside it, professional food photography, clean white background, no text visible.
         -------------------------------------
         Example 3
         Liste nutritionnelle:
@@ -75,7 +75,7 @@ def generate_product_summary_prompt(
                 "fiber_100g": "3.5", 
                 "proteins_100g": "6.1", 
                 "salt_100g": "1.2"
-        Response:  "barbecue potato chips and a salt shaker"
+        Response: Barbecue potato chips in a bowl with salt crystals scattered around, professional food photography, no text or labels.
 
         -------------------------------------
 
@@ -128,7 +128,8 @@ def get_image(prompt):
     body=json.dumps({
         "taskType": "TEXT_IMAGE",
         "textToImageParams": {
-            "text": f"{prompt}, professional food photography, studio lighting, clean composition, high resolution, editorial quality, commercial product photography style"
+            "text": f"{prompt}, professional food photography, studio lighting, clean composition, high resolution, editorial quality, commercial product photography style",
+            "negativeText": "text, words, letters, labels, writing, typography, captions, watermarks, logos, signs, numbers, alphabet"
         },
         "imageGenerationConfig": {
             "numberOfImages": 1,

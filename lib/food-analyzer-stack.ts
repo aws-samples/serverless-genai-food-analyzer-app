@@ -62,24 +62,6 @@ export class FoodAnalyzerStack extends Stack {
       }:094274105915:layer:AWSLambdaPowertoolsTypeScriptV2:2`
     );
 
-    // boto3 and requests are included in Python 3.12 runtime by default
-    // const boto3Layer = lambda.LayerVersion.fromLayerVersionArn(
-    //   this,
-    //   "boto3-layer",
-    //   `arn:aws:lambda:${
-    //     Stack.of(this).region
-    //   }:770693421928:layer:Klayers-p312-boto3:5`
-    // );
-
-    // requests-html requires additional dependencies, using PowerTools only
-    // const requestsLayer = lambda.LayerVersion.fromLayerVersionArn(
-    //   this,
-    //   "requests-layer",
-    //   `arn:aws:lambda:${
-    //     Stack.of(this).region
-    //   }:017000801446:layer:AWSLambdaPowertoolsPythonV2-Extras:56`
-    // );
-
     const openFoodFactsProductsTable = new dynamodb.Table(this, "allProductsOpenFoodFactsTable", {
       partitionKey: {
         name: "product_code",

@@ -49,6 +49,15 @@ const BarcodeProductSummary: React.FC<BarcodeProductSummaryProps> = ({
     }
   }
 
+  function getHealthGoal() {
+    const prefsString = localStorage.getItem("userPreferences");
+    if (prefsString) {
+      const prefs = JSON.parse(prefsString);
+      return prefs.healthGoal?.value || '';
+    }
+    return '';
+  }
+
   useEffect(() => {
     // Make a new API call using the result from the first API call
     const fetchData = async () => {
@@ -63,6 +72,7 @@ const BarcodeProductSummary: React.FC<BarcodeProductSummaryProps> = ({
           language,
           preferences: getPreference(),
           allergies: getAllergies(),
+          healthGoal: getHealthGoal(),
         };
 
         const response = await callAPI(`fetchImage`, "POST", body);
@@ -96,6 +106,7 @@ const BarcodeProductSummary: React.FC<BarcodeProductSummaryProps> = ({
           allergies: JSON.parse(
             localStorage.getItem("personalPrefAllergies") || "{}"
           ),
+          healthGoal: getHealthGoal(),
         };
 
         const response = await callStreamingAPI("fetchSummary", "POST", body);

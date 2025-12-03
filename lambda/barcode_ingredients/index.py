@@ -1,6 +1,7 @@
 import time
 import boto3
 import json
+from decimal import Decimal
 from botocore.exceptions import ClientError
 import urllib.parse
 import requests
@@ -15,6 +16,12 @@ logger = Logger()
 
 bedrock = boto3.client("bedrock-runtime")
 dynamodb = boto3.resource('dynamodb')
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super(DecimalEncoder, self).default(obj)
 
 
 PRODUCT_TABLE_NAME = os.environ['PRODUCT_TABLE_NAME']
@@ -101,7 +108,7 @@ def make_api_request(product_code):
     api_url = os.environ.get('API_URL')
     url = f'{api_url}/api/v2/product/{product_code}'
     headers = {'Accept': 'application/json'}
-    fixed_params = {'fields': 'ingredients_text,additives_tags,product_name'}
+    fixed_params = {'fields': 'ingredients_text,additives_tags,product_name,allergens_tags,nutriments,labels_tags,categories'}
     full_url = f'{url}?{urllib.parse.urlencode(fixed_params)}'
     logger.debug("Calling the API to get the product informations")
 
@@ -157,6 +164,41 @@ def call_claude_haiku(prompt_text):
 
     results = response_body.get("content")[0].get("text")
     return results
+
+def filter_nutriments(nutriments):
+    """
+    Filters nutriments to only include key nutritional fields.
+    Converts numeric values to Decimal for DynamoDB compatibility.
+    
+    Args:
+        nutriments (dict): Full nutriments dictionary from API
+        
+    Returns:
+        dict: Filtered nutriments with only key fields (excludes None values)
+    """
+    if not nutriments:
+        return {}
+    
+    key_fields = [
+        'energy-kcal_100g',
+        'carbohydrates_100g',
+        'sugars_100g',
+        'fat_100g',
+        'saturated-fat_100g',
+        'salt_100g',
+        'sodium_100g',
+        'proteins_100g',
+        'fiber_100g'
+    ]
+    
+    # Filter out None values and convert to Decimal for DynamoDB
+    filtered = {}
+    for k in key_fields:
+        if k in nutriments and nutriments[k] is not None:
+            # Convert to Decimal for DynamoDB compatibility
+            filtered[k] = Decimal(str(nutriments[k]))
+    
+    return filtered
 
 def clean_text_in_brackets(text):
     """
@@ -257,8 +299,8 @@ def get_product_from_db(product_code, language):
         product_code (str): The code of the product to retrieve information for.
 
     Returns:
-        tuple: A tuple containing product name, ingredients, and additives if the product is found in the database;
-               otherwise, returns (None, None, None).
+        tuple: A tuple containing product name, ingredients, additives, allergens, nutriments, labels, and categories if the product is found in the database;
+               otherwise, returns (None, None, None, None, None, None, None).
     """
 
     table = dynamodb.Table(PRODUCT_TABLE_NAME)
@@ -276,19 +318,23 @@ def get_product_from_db(product_code, language):
             product_name = item.get('product_name')
             ingredients = item.get('ingredients')
             additives = item.get('additives')
+            allergens = item.get('allergens_tags', [])
+            nutriments = item.get('nutriments', {})
+            labels = item.get('labels_tags', [])
+            categories = item.get('categories', '')
             
             # Check if either ingredients or additives don't exist, then return None
             if ingredients is None or additives is None:
-                return None, None, None
-            return product_name, ingredients, additives
+                return None, None, None, None, None, None, None
+            return product_name, ingredients, additives, allergens, nutriments, labels, categories
         else:
-            return None, None, None
+            return None, None, None, None, None, None, None
     except Exception as e:
         logger.error("Error while getting the Product from database", e)
-        return None, None, None
+        return None, None, None, None, None, None, None
 
 @tracer.capture_method
-def write_product_to_db(product_code, language, product_name, ingredients, additives):
+def write_product_to_db(product_code, language, product_name, ingredients, additives, allergens, nutriments, labels, categories):
     """
     Writes product information product table.
 
@@ -297,6 +343,10 @@ def write_product_to_db(product_code, language, product_name, ingredients, addit
         product_name (str): The name of the product.
         ingredients (list): The list of ingredients of the product.
         additives (list): The list of additives of the product.
+        allergens (list): The list of allergens tags.
+        nutriments (dict): The filtered nutriments data.
+        labels (list): The list of labels tags.
+        categories (str): The product categories.
 
     Returns:
         None
@@ -316,6 +366,22 @@ def write_product_to_db(product_code, language, product_name, ingredients, addit
 
         if ingredients is not None:
             item['ingredients'] = ingredients
+            
+        # Only add allergens if list is not empty
+        if allergens and len(allergens) > 0:
+            item['allergens_tags'] = allergens
+            
+        # Only add nutriments if dict is not empty
+        if nutriments and len(nutriments) > 0:
+            item['nutriments'] = nutriments
+            
+        # Only add labels if list is not empty
+        if labels and len(labels) > 0:
+            item['labels_tags'] = labels
+            
+        # Only add categories if not empty
+        if categories:
+            item['categories'] = categories
 
         # Write item to DynamoDB table
         response = table.put_item(Item=item)
@@ -370,8 +436,8 @@ def fetch_new_product(product_code, language):
         product_code (str): The code of the product to fetch.
 
     Returns:
-        tuple: A tuple containing dictionaries of ingredients and additives, along with the product name,
-               if the product information is successfully fetched from the API; otherwise, returns (None, None, None, None).
+        tuple: A tuple containing dictionaries of ingredients, additives, allergens, nutriments, labels, categories, and product name,
+               if the product information is successfully fetched from the API; otherwise, returns (None, None, None, None, None, None, None).
     """
 
     response_data = get_product_from_open_food_facts_db(product_code)
@@ -382,6 +448,11 @@ def fetch_new_product(product_code, language):
     if response_data is not None:
 
         additives=[]
+        allergens=[]
+        nutriments={}
+        labels=[]
+        categories=''
+        
         if 'product' not in response_data or 'ingredients_text' not in response_data['product']:
             raise ValueError("Missing ingredients in Open Food Facts API. Unable to generate a personalized summary for this product.")
 
@@ -397,11 +468,27 @@ def fetch_new_product(product_code, language):
         response_additives = additives
         if additives:
             response_additives = parse_additives_description(additives, language)
+            
+        # Extract allergens
+        if 'product' in response_data and 'allergens_tags' in response_data['product']:
+            allergens = response_data['product']['allergens_tags']
+            
+        # Extract and filter nutriments
+        if 'product' in response_data and 'nutriments' in response_data['product']:
+            nutriments = filter_nutriments(response_data['product']['nutriments'])
+            
+        # Extract labels
+        if 'product' in response_data and 'labels_tags' in response_data['product']:
+            labels = response_data['product']['labels_tags']
+            
+        # Extract categories
+        if 'product' in response_data and 'categories' in response_data['product']:
+            categories = response_data['product']['categories']
 
-        return response_ingredients, response_additives, product_name
+        return response_ingredients, response_additives, product_name, allergens, nutriments, labels, categories
 
     else:
-        return None, None, None
+        return None, None, None, None, None, None, None
 
 @logger.inject_lambda_context(log_event=True)
 @tracer.capture_lambda_handler
@@ -412,18 +499,18 @@ def handler(event, context):
         product_code = fields[1]
         language = fields[2]
         logger.debug("ProductCode="+product_code)
-        product_name, response_ingredients, response_additives = get_product_from_db(product_code, language)
+        product_name, response_ingredients, response_additives, allergens, nutriments, labels, categories = get_product_from_db(product_code, language)
         
         if product_name is not None:        
             logger.debug("Product found in the database")
         else:
             logger.debug("Product not found in the database")
 
-            response_ingredients, response_additives, product_name = fetch_new_product(product_code, language)
+            response_ingredients, response_additives, product_name, allergens, nutriments, labels, categories = fetch_new_product(product_code, language)
             
             
             if  response_ingredients is not None:
-                write_product_to_db(product_code, language, product_name, response_ingredients, response_additives)
+                write_product_to_db(product_code, language, product_name, response_ingredients, response_additives, allergens, nutriments, labels, categories)
 
             if(response_ingredients is None):
                 response_ingredients = {"Ingredients Generation Error": "Description Generation Unavailable"}                
@@ -433,6 +520,10 @@ def handler(event, context):
                 "ingredients_description": response_ingredients,
                 "additives_description": response_additives,
                 "product_name": product_name,
+                "allergens_tags": allergens,
+                "nutriments": nutriments,
+                "labels_tags": labels,
+                "categories": categories,
         }
 
         logger.debug("Response", extra=response)
@@ -440,7 +531,7 @@ def handler(event, context):
         # Return JSON response
         return {
             "statusCode": 200,
-            "body": json.dumps(response),
+            "body": json.dumps(response, cls=DecimalEncoder),
             "headers": {
                 "Access-Control-Allow-Headers": "*",
                 "Access-Control-Allow-Origin": "*",
