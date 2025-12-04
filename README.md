@@ -22,7 +22,7 @@ We developed this exhibit to create an interactive serverless application using 
 - **Personalized product information**: Curious about what is in a product and if it is good for you?
 Just scan the barcode with the app for an explained list of ingredients/allergens and a personalized summary based on your preferences, health goals, and dietary restrictions. The app provides direct allergen detection and quantitative nutritional analysis using data from Open Food Facts.
 
-- **Personalized recipe generator**: Capture a photo of the ingredients in your fridge, and the app will generate recipes based on your preferences using those ingredients.
+- **Personalized recipe generator**: Capture multiple photos of ingredients in your fridge and pantry, and the app will generate recipes based on your preferences using those ingredients.
 
 
 ## Demo
@@ -129,9 +129,9 @@ The architecture of the application can be split in 4 blocks:
 
 #### Food aliment detection
 
-- **Strategy**: Extract ingredients from the image, works well on fruits and vegetables.
+- **Strategy**: Extract ingredients from multiple images, works well on fruits and vegetables. Users can capture their entire fridge and pantry to enable comprehensive meal planning.
 
-- **Implementation**: We use Anthropic Claude 3 Sonnet on Amazon Bedrock with its vision capabilities to extract only food elements from the image. This allows us to focus on the food elements and ignore the background or other elements in the image. Claude 3 is a multi-modal model that can handle both text and images. The output is a list of ingredients present in the image.
+- **Implementation**: We use Anthropic Claude 3 Sonnet on Amazon Bedrock with its vision capabilities to extract only food elements from the images. This allows us to focus on the food elements and ignore the background or other elements in the images. Claude 3 is a multi-modal model that can handle both text and images. The output is a list of ingredients present across all captured images. The backend processes multiple images via the `list_images_base64` array parameter.
 
 - **Prompt Engineering**: To exploit the full potential of the model, we use a system prompt. A system prompt is a way to provide context, instructions, and guidelines to Claude before presenting it with a question or task. By using a system prompt, you can set the stage for the conversation, specifying Claude's role, personality, tone, or any other relevant information that will help it to better understand and respond to the user's input.
 

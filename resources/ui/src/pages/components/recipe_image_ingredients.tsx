@@ -13,29 +13,29 @@ import { on } from "events";
 import { FlowItems } from "./flowitems";
 
 interface RecipeImageIngredientsProps {
-  img: string;
+  images: string[];
   language: string;
   onRecipePropositionsDone?: () => void;
 }
 
 const RecipeImageIngredients: React.FC<RecipeImageIngredientsProps> = ({
-  img,
+  images,
   language,
   onRecipePropositionsDone,
 }) => {
   const currentTranslations = customTranslations[language];
-  const [loadingImageIngredients, setLoadingImageIngredients] = useState(true); // Added loading state
+  const [loadingImageIngredients, setLoadingImageIngredients] = useState(true);
   const [imageIngredientsResponse, setImageIngredientsResponse] = useState<
     any[]
   >([]);
-  const [responseReceived, setResponseReceived] = useState(false); // Added loading state
+  const [responseReceived, setResponseReceived] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setResponseReceived(false);
         const body = {
-          list_images_base64: [img],
+          list_images_base64: images,
           language: language,
         };
 
@@ -54,7 +54,7 @@ const RecipeImageIngredients: React.FC<RecipeImageIngredientsProps> = ({
     };
 
     fetchData();
-  }, [img, language]);
+  }, [images, language]);
 
   return (
     <TextContent>
