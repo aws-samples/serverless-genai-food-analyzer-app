@@ -21,7 +21,8 @@ const Recipe: React.FC = () => {
   const webcamRef = useRef<any>();
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [myValue, setMyValue] = useState([]);
-  const [selectedImgSrc, setSelectedImgSrc] = useState<string | null>(null);
+  const [capturedImages, setCapturedImages] = useState<string[]>([]);
+  const [selectedImgSrc, setSelectedImgSrc] = useState<string[]>([]);
   const [showWebcam, setShowWebcam] = useState(false);
   const [showOptionsButtons, setShowOptionsButtons] = useState(true);
   const [loadingVideoDevices, setLoadingVideoDevices] = useState(false);
@@ -131,8 +132,20 @@ function resizeBase64Image(base64Image: string, width: number, height: number): 
     }
   }, [webcamRef]);
 
+  const addImage = () => {
+    if (imgSrc) {
+      setCapturedImages([...capturedImages, imgSrc]);
+      setImgSrc(null);
+      setShowOptionsButtons(true);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setCapturedImages(capturedImages.filter((_, i) => i !== index));
+  };
+
   const startWebcam = () => {
-    setSelectedImgSrc(null);
+    setSelectedImgSrc([]);
     setImgSrc(null);
     setShowWebcam(true);
     enumerateDevices();
@@ -141,17 +154,17 @@ function resizeBase64Image(base64Image: string, width: number, height: number): 
   const retake = () => {
     setImgSrc(null);
   };
-  const useThisImage = () => {
-    setShowOptionsButtons(false);
-    //setShowWebcam(false);
 
-    setSelectedImgSrc(imgSrc);
+  const useTheseImages = () => {
+    const allImages = imgSrc ? [...capturedImages, imgSrc] : capturedImages;
+    setSelectedImgSrc(allImages);
+    setShowOptionsButtons(false);
   };
 
   const currentTranslations = customTranslations[language];
 
   const fileUploadOnChange = ({ detail }) => {
-    setSelectedImgSrc(null);
+    setSelectedImgSrc([]);
     console.log(detail.value);
     const files = detail.value;
     if (files.length > 0) {
@@ -239,6 +252,42 @@ function resizeBase64Image(base64Image: string, width: number, height: number): 
               )}
 
               {/* Conditionally render the image */}
+              {capturedImages.length > 0 && !imgSrc && (
+                <div style={{ textAlign: "center" }}>
+                  <h4>{currentTranslations["recipe_captured_images"]} ({capturedImages.length})</h4>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center" }}>
+                    {capturedImages.map((img, index) => (
+                      <div key={index} style={{ position: "relative" }}>
+                        <img
+                          src={img}
+                          style={{
+                            borderRadius: "5px",
+                            height: "150px",
+                            objectFit: "cover",
+                          }}
+                        />
+                        <Button
+                          iconName="close"
+                          variant="icon"
+                          onClick={() => removeImage(index)}
+                          ariaLabel="Remove image"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: "10px" }}>
+                    <SpaceBetween direction="horizontal" size="s">
+                      <Button onClick={startWebcam} variant="normal">
+                        {currentTranslations["recipe_add_more"]}
+                      </Button>
+                      <Button onClick={useTheseImages} variant="primary">
+                        {currentTranslations["recipe_generate_recipes"]}
+                      </Button>
+                    </SpaceBetween>
+                  </div>
+                </div>
+              )}
+
               {imgSrc && (
                 <>
                   <div style={{ textAlign: "center", maxHeight: "70vh" }}>
@@ -263,12 +312,16 @@ function resizeBase64Image(base64Image: string, width: number, height: number): 
                       }}
                     >
                       <SpaceBetween direction="horizontal" size="s">
-                        {/* <Button onClick={retake} variant="primary">
+                        <Button onClick={retake} variant="normal">
                           {currentTranslations["recipe_retake_photo"]}
-                        </Button> */}
-
-                        <Button onClick={useThisImage} variant="primary">
-                          {currentTranslations["recipe_use_this"]}
+                        </Button>
+                        <Button onClick={addImage} variant="normal">
+                          {currentTranslations["recipe_add_image"]}
+                        </Button>
+                        <Button onClick={useTheseImages} variant="primary">
+                          {capturedImages.length > 0 
+                            ? currentTranslations["recipe_generate_recipes"]
+                            : currentTranslations["recipe_use_this"]}
                         </Button>
                       </SpaceBetween>
                     </div>
@@ -348,10 +401,10 @@ function resizeBase64Image(base64Image: string, width: number, height: number): 
 
         <div id="reader"></div>
 
-        {selectedImgSrc && (
+        {selectedImgSrc.length > 0 && (
           <div>
             <ImageIngredients
-              img={selectedImgSrc}
+              images={selectedImgSrc}
               language={language}
               onRecipePropositionsDone={() => {
                 setShowWebcam(false);
