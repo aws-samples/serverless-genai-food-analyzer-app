@@ -39,9 +39,7 @@ const BarcodeIngredients: React.FC<BarcodeIngredientsProps> = ({
   const [ingredientsError, setIngredientsError] = useState("");
 
   const fetchData = async () => {
-    console.log(
-      `call backend with scannedCode: ${productCode} and language: ${language}`
-    );
+
     setApiResponse(null);
     setLoading(true);
 
@@ -53,13 +51,11 @@ const BarcodeIngredients: React.FC<BarcodeIngredientsProps> = ({
       );
 
       if (!response.error) {
-        console.log("response=" + JSON.stringify(response));
         const keyValueArray = Object.entries(response.ingredients_description);
         const newIngredients = keyValueArray.map(([key, value]) => ({
           label: key,
           description: value,
         }));
-        console.log(newIngredients);
 
         setIngredients(newIngredients);
 
