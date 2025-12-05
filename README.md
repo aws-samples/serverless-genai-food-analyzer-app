@@ -223,7 +223,7 @@ The output format is a Markdown file to faciliate the display of the recipe on t
 
 - **Challenge**: Present the application in multiple languages
 
-- **Solution**: The same prompt is utilized, but the LLM is instructed to generate the output in a specific language, catering to the user's language preference (English/French).
+- **Solution**: The same prompt is utilized, but the LLM is instructed to generate the output in a specific language, catering to the user's language preference (English, French, Spanish, Italian, Arabic). The UI includes comprehensive translations for all features including allergen warnings, ingredient descriptions, and nutritional information.
 
 **Direct Allergen Detection and Nutritional Analysis**
 
