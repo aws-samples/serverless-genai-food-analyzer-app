@@ -4,6 +4,7 @@ import Button from "@cloudscape-design/components/button";
 import Ingredients from "./barcode_ingredients";
 import Badge from "@cloudscape-design/components/badge";
 import Link from "@cloudscape-design/components/link";
+import Alert from "@cloudscape-design/components/alert";
 import {
   Box,
   Container,
@@ -43,9 +44,16 @@ const Barcode: React.FC = () => {
   const [productCode, setProductCode] = useState("");
   const [showScanner, setShowScanner] = useState(false);
   const [tempProductCode, setTempProductCode] = useState("");
+  const [hasPreferences, setHasPreferences] = useState(false);
   const currentTranslations = customTranslations[language]; // Get translations for the current language or fallback to English
 
   let html5QrcodeScanner: any;
+
+  // Check if user has set preferences
+  useEffect(() => {
+    const stored = localStorage.getItem("userPreferences");
+    setHasPreferences(!!stored);
+  }, []);
 
   function onScanFailure(error: unknown) {
     console.warn(`Code scan error = ${error}`);
@@ -122,7 +130,11 @@ const Barcode: React.FC = () => {
         >
           <div style={{ textAlign: "center" }}>
             {!showScanner && (
-              <Button variant="primary" onClick={handleButtonClick}>
+              <Button 
+                variant="primary" 
+                onClick={handleButtonClick}
+                iconName="search"
+              >
                 {currentTranslations["scan_button_label"]}
               </Button>
             )}
@@ -153,27 +165,106 @@ const Barcode: React.FC = () => {
         </div>
 
         {!showScanner && (
-          <Box>
-            <div style={{ textAlign: "left" }}>
-              <h4>{currentTranslations["scan_main_title"]}</h4>
-
-              <SpaceBetween direction="vertical" size="m">
-                <div>
-                  <p>
-                    <Badge color="green">1</Badge>{" "}
-                    {currentTranslations["scan_label_1"]}{" "}
-                    <Link href="/preference">
-                      {currentTranslations["scan_label_2"]}
-                    </Link>
-                  </p>
-                  <p>
-                    <Badge color="green">2</Badge>{" "}
-                    {currentTranslations["scan_label_3"]}
-                  </p>
-                </div>
-              </SpaceBetween>
+          <div style={{
+            background: "white",
+            borderRadius: "8px",
+            padding: "20px",
+            border: "1px solid #e5e7eb",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+          }}>
+            {!hasPreferences && (
+              <Alert
+                type="warning"
+                header="Set your preferences first"
+              >
+                To get personalized nutritional information, please{" "}
+                <Link href="/preference">set your preferences</Link> before scanning.
+              </Alert>
+            )}
+            
+            <div style={{ 
+              textAlign: "center", 
+              margin: hasPreferences ? "0 0 24px 0" : "16px 0 24px 0"
+            }}>
+              <div style={{
+                fontSize: "48px",
+                marginBottom: "8px",
+                opacity: 0.8
+              }}>
+                📱
+              </div>
+              <h3 style={{ 
+                margin: "0 0 8px 0", 
+                fontSize: "18px", 
+                fontWeight: "600",
+                color: "#1f2937"
+              }}>
+                {currentTranslations["scan_main_title"]}
+              </h3>
+              <p style={{ 
+                margin: 0, 
+                fontSize: "14px", 
+                color: "#6b7280" 
+              }}>
+                Point your camera at a product barcode
+              </p>
             </div>
-          </Box>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px"
+              }}>
+                <div style={{
+                  background: "#3b82f6",
+                  color: "white",
+                  width: "24px",
+                  height: "24px",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "600",
+                  fontSize: "14px",
+                  flexShrink: 0
+                }}>
+                  1
+                </div>
+                <span style={{ fontSize: "15px", lineHeight: "1.5", color: "#374151" }}>
+                  {currentTranslations["scan_label_1"]}{" "}
+                  <Link href="/preference">
+                    {currentTranslations["scan_label_2"]}
+                  </Link>
+                </span>
+              </div>
+
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px"
+              }}>
+                <div style={{
+                  background: "#3b82f6",
+                  color: "white",
+                  width: "24px",
+                  height: "24px",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "600",
+                  fontSize: "14px",
+                  flexShrink: 0
+                }}>
+                  2
+                </div>
+                <span style={{ fontSize: "15px", lineHeight: "1.5", color: "#374151" }}>
+                  {currentTranslations["scan_label_3"]}
+                </span>
+              </div>
+            </div>
+          </div>
         )}
         <div id="reader"></div>
 
