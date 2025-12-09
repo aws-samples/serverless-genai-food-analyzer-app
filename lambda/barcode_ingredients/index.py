@@ -158,7 +158,11 @@ def call_claude_haiku(prompt_text):
     contentType = "application/json"
 
     response = bedrock.invoke_model(
-        body=body, modelId=modelId, accept=accept, contentType=contentType
+        body=body,
+        modelId=modelId,
+        accept=accept,
+        contentType=contentType,
+        performanceConfigLatency='standard',
     )
     response_body = json.loads(response.get("body").read())
 

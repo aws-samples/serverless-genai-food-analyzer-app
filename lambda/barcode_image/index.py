@@ -102,6 +102,7 @@ def query_bedrock(payload, model_id):
             modelId=model_id,
             contentType="application/json",
             accept="*/*",
+            performanceConfigLatency='standard',
         )
         logger.debug(response)
         input_token_count = response["ResponseMetadata"]["HTTPHeaders"]["x-amzn-bedrock-input-token-count"]
@@ -149,7 +150,11 @@ def get_image(prompt):
     logger.debug(f"Generating image with Nova Canvas model {model_id}")
 
     response = bedrock.invoke_model(
-        body=body, modelId=model_id, accept=accept, contentType=content_type
+        body=body,
+        modelId=model_id,
+        accept=accept,
+        contentType=content_type,
+        performanceConfigLatency='standard'
     )
     response_body = json.loads(response.get("body").read())
 
@@ -362,13 +367,32 @@ def handler(event, context):
             }
 
         else:
-            logger.debug("Product not found in the database")
-            raise ProductNotFoundException("Product not found.")
+            logger.debug("Product not found in the database - needs to be scanned first")
+            return {
+                "statusCode": 202,
+                "body": json.dumps({"message": "Product data is being fetched. Please try again in a moment."}),
+                "headers": {
+                    "Access-Control-Allow-Headers": "*",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+                },
+            }
+    except ProductNotFoundException as e:
+            logger.error("Product not found: %s", e)
+            return {
+            "statusCode": 404,
+            "body": json.dumps({"error": str(e)}),
+            "headers": {
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+            },
+        }
     except Exception as e:
-            logger.error("Error:", e)
+            logger.error("Error: %s", e)
             return {
             "statusCode": 500,
-            "body": json.dumps({"error": "Unwnown error"}),
+            "body": json.dumps({"error": "Unknown error"}),
             "headers": {
                 "Access-Control-Allow-Headers": "*",
                 "Access-Control-Allow-Origin": "*",

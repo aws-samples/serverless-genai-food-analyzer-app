@@ -49,7 +49,11 @@ def generate_vision_answer(bedrock_rt:boto3.client,messages:list, model_id:str, 
     
     body={'messages': [messages],**claude_config, "system": system_prompt}
     
-    response = bedrock_rt.invoke_model(modelId=model_id, body=json.dumps(body))   
+    response = bedrock_rt.invoke_model(
+        modelId=model_id,
+        body=json.dumps(body),
+        performanceConfigLatency='standard'
+    )   
     response = json.loads(response['body'].read().decode('utf-8'))
     if post_process:
         formated_response= post_process_answer(response['content'][0]['text'])
