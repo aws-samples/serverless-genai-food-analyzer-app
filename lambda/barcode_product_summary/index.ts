@@ -290,6 +290,7 @@ async function generateSummary(promptText: string, responseStream: NodeJS.Writab
         contentType: "application/json",
         accept: "application/json",
         body: JSON.stringify(payload),
+        performanceConfigLatency: 'standard'
     };
     let completion = '';
     try {

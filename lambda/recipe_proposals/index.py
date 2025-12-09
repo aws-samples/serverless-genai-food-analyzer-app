@@ -43,7 +43,11 @@ def call_bedrock_thread(prompt, model_id, accept, content_type):
     })
 
     response = bedrock_rt.invoke_model(
-        body=body, modelId=model_id, accept=accept, contentType=content_type
+        body=body,
+        modelId=model_id,
+        accept=accept,
+        contentType=content_type,
+        performanceConfigLatency='standard',
     )
     response_body = json.loads(response.get("body").read())
     base64_image = response_body.get("images")[0]
@@ -114,7 +118,11 @@ def generate_answer(prompt:str, model_id:str, claude_config:dict,system_prompt:s
                           {"role": "assistant", "content": "The answer is"}]}
     
     body={**message,**claude_config, "system": system_prompt}
-    response = bedrock_rt.invoke_model(modelId=model_id, body=json.dumps(body))
+    response = bedrock_rt.invoke_model(
+        modelId=model_id,
+        body=json.dumps(body),
+        performanceConfigLatency='standard'
+    )
     response = json.loads(response['body'].read().decode('utf-8'))
     if post_process:
         formated_response= post_process_answer(response['content'][0]['text'])
