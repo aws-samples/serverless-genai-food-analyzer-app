@@ -42,6 +42,10 @@ interface ProductItem {
     nutriments?: any;
     labels_tags?: string[];
     categories?: string;
+    nova_group?: number;
+    nutriscore_grade?: string;
+    ecoscore_grade?: string;
+    brands?: string;
 }
 
 interface ProductSummaryItem {
@@ -68,7 +72,11 @@ function generateProductSummaryPrompt(
     productNutriments: any,
     productLabels: string[],
     productCategories: string,
-    language: string
+    language: string,
+    nova_group?: number,
+    nutriscore_grade?: string,
+    ecoscore_grade?: string,
+    brands?: string
     ): string {
     
     // Format nutriments for display
@@ -104,6 +112,17 @@ function generateProductSummaryPrompt(
         categoryInfo = `\n<product_categories>${productCategories}</product_categories>\n`;
     }
     
+    // Format quality indicators (only if present and relevant)
+    let qualityInfo = '';
+    if (userHealthGoal && (nova_group === 4 || nutriscore_grade === 'd' || nutriscore_grade === 'e')) {
+        qualityInfo = '\n<product_quality>\n';
+        if (nova_group === 4) qualityInfo += 'Processing: Ultra-processed (NOVA 4)\n';
+        if (nutriscore_grade === 'd' || nutriscore_grade === 'e') {
+            qualityInfo += `Nutri-Score: ${nutriscore_grade.toUpperCase()} (lower nutritional quality)\n`;
+        }
+        qualityInfo += '</product_quality>\n';
+    }
+    
     // Build instructions based on what user has set
     let instructions = `You are a nutrition expert providing recommendations about a specific product.
 
@@ -120,6 +139,9 @@ function generateProductSummaryPrompt(
     
     if (userHealthGoal) {
         instructions += `${(userAllergies ? 1 : 0) + (userPreference ? 1 : 0) + 1}. Use nutritional data to assess if the product aligns with the health goal: ${userHealthGoal}.\n`;
+        if (nova_group === 4 || nutriscore_grade === 'd' || nutriscore_grade === 'e') {
+            instructions += `   - Consider the product quality indicators when making recommendations.\n`;
+        }
     }
     
     if (userReligion) {
@@ -146,6 +168,7 @@ function generateProductSummaryPrompt(
             <labelInfo>${labelInfo}</labelInfo>
             <categoryInfo>${categoryInfo}</categoryInfo>
             <nutrimentInfo>${nutrimentInfo}</nutrimentInfo>
+            ${qualityInfo}
 
           For the user:
             ${userContext}
@@ -209,9 +232,9 @@ function calculateHash(
  *
  * @param productCode - The code of the product to retrieve information for.
  * @param language - The language for the product information.
- * @returns A tuple containing product name, ingredients, additives, allergens, and nutriments if the product is found in the database; otherwise, returns [null, null, null, null, null].
+ * @returns A tuple containing product name, ingredients, additives, allergens, nutriments, labels, categories, nova_group, nutriscore_grade, ecoscore_grade, and brands if the product is found in the database; otherwise, returns [null, null, null, null, null, null, null, null, null, null, null].
  */
-async function getProductFromDb(productCode: string, language: string): Promise<[string | null, string | null, string | null, string[] | null, any | null, string[] | null, string | null]> {
+async function getProductFromDb(productCode: string, language: string): Promise<[string | null, string | null, string | null, string[] | null, any | null, string[] | null, string | null, number | null, string | null, string | null, string | null]> {
 
     try {
         const { Item  = {} } = await dynamodb.send(new GetItemCommand({
@@ -231,14 +254,18 @@ async function getProductFromDb(productCode: string, language: string): Promise<
                 item.allergens_tags || null,
                 item.nutriments || null,
                 item.labels_tags || null,
-                item.categories || null
+                item.categories || null,
+                item.nova_group || null,
+                item.nutriscore_grade || null,
+                item.ecoscore_grade || null,
+                item.brands || null
             ];
         } else {
-            return [null, null, null, null, null, null, null];
+            return [null, null, null, null, null, null, null, null, null, null, null];
         }
     } catch (e) {
         console.error('Error while getting the Product from database', e);
-        return [null, null, null, null, null, null, null];
+        return [null, null, null, null, null, null, null, null, null, null, null];
     }
 }
 
@@ -391,7 +418,7 @@ async function messageHandler (event: APIGatewayProxyEventV2, responseStream: No
         const userAllergiesString = userAllergiesKeys.join(', ');
 
 
-        const [productName, productIngredients, productAdditives, productAllergens, productNutriments, productLabels, productCategories] = await getProductFromDb(productCode, language);
+        const [productName, productIngredients, productAdditives, productAllergens, productNutriments, productLabels, productCategories, nova_group, nutriscore_grade, ecoscore_grade, brands] = await getProductFromDb(productCode, language);
         if (productName && productIngredients) {
             logger.info("Product found");
 
@@ -420,7 +447,11 @@ async function messageHandler (event: APIGatewayProxyEventV2, responseStream: No
                 productNutriments || {},
                 productLabels || [],
                 productCategories || '',
-                language!
+                language!,
+                nova_group || undefined,
+                nutriscore_grade || undefined,
+                ecoscore_grade || undefined,
+                brands || undefined
             );
             productSummary = await generateSummary(promptText, responseStream);
             await putProductSummaryToDynamoDB(productCode, hashValue, productSummary);

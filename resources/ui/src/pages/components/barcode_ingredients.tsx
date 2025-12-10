@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
 import IngredientsSummary from "./barcode_product_summary";
+import { QualityScoreCard } from "./quality_score_card";
+import { NutrientProgressBars } from "./nutrient_progress_bars";
+import { NutriScoreLogo } from "./nutriscore_logo";
+import { NovaLogo } from "./nova_logo";
+import { EcoScoreLogo } from "./ecoscore_logo";
 
 import Popover from "@cloudscape-design/components/popover";
 import Button from "@cloudscape-design/components/button";
@@ -39,6 +44,12 @@ const BarcodeIngredients: React.FC<BarcodeIngredientsProps> = ({
   const [ingredientsError, setIngredientsError] = useState("");
   const [nutriments, setNutriments] = useState<any>(null);
   const [allergensTags, setAllergensTags] = useState<string[]>([]);
+  const [labelsTags, setLabelsTags] = useState<string[]>([]);
+  const [novaGroup, setNovaGroup] = useState<number | undefined>(undefined);
+  const [nutriscoreGrade, setNutriscoreGrade] = useState<string | undefined>(undefined);
+  const [ecoscoreGrade, setEcoscoreGrade] = useState<string | undefined>(undefined);
+  const [brands, setBrands] = useState<string | undefined>(undefined);
+  const [healthGoal, setHealthGoal] = useState<string | undefined>(undefined);
 
   // Check if ingredient matches user allergens
   const isAllergen = (ingredientLabel: string): boolean => {
@@ -99,6 +110,18 @@ const BarcodeIngredients: React.FC<BarcodeIngredientsProps> = ({
         setProductName(response.product_name);
         setNutriments(response.nutriments || null);
         setAllergensTags(response.allergens_tags || []);
+        setLabelsTags(response.labels_tags || []);
+        setNovaGroup(response.nova_group);
+        setNutriscoreGrade(response.nutriscore_grade);
+        setEcoscoreGrade(response.ecoscore_grade);
+        setBrands(response.brands);
+
+        // Extract health goal from user preferences
+        const stored = localStorage.getItem("userPreferences");
+        if (stored) {
+          const prefs = JSON.parse(stored);
+          setHealthGoal(prefs.healthGoal?.label || undefined);
+        }
 
         const myAdditives:Additive [] = [];
         for (const key in response.additives_description) {
@@ -186,43 +209,46 @@ const BarcodeIngredients: React.FC<BarcodeIngredientsProps> = ({
                       </p>
                     </div>
 
-                    {/* Nutritional Info Cards */}
+                    {/* Quality Score Card */}
+                    <QualityScoreCard
+                      nutriscore_grade={nutriscoreGrade}
+                      additives={additives}
+                      labels_tags={labelsTags}
+                    />
+
+                    {/* Quality Logos - Single Row Compact */}
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      alignItems: 'center',
+                      gap: '12px',
+                      margin: '12px 0'
+                    }}>
+                      {nutriscoreGrade && (
+                        <div style={{ flex: '0 0 auto' }}>
+                          <NutriScoreLogo grade={nutriscoreGrade} size={140} />
+                        </div>
+                      )}
+                      {novaGroup && (
+                        <div style={{ flex: '0 0 auto' }}>
+                          <NovaLogo group={novaGroup} size={40} />
+                        </div>
+                      )}
+                      {ecoscoreGrade && (
+                        <div style={{ flex: '0 0 auto' }}>
+                          <EcoScoreLogo grade={ecoscoreGrade} size={60} />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Nutritional Info Progress Bars */}
                     {nutriments && (
-                      <div style={{ 
-                        display: "flex", 
-                        justifyContent: "space-around", 
-                        gap: "8px",
-                        padding: "8px 0"
-                      }}>
-                        <div style={{ textAlign: "center", flex: 1 }}>
-                          <div style={{ fontSize: "18px" }}>🔥</div>
-                          <div style={{ fontSize: "14px", fontWeight: "600", color: "#1f2937" }}>
-                            {nutriments["energy-kcal_100g"] || "N/A"}
-                          </div>
-                          <div style={{ fontSize: "10px", color: "#6b7280" }}>kcal</div>
-                        </div>
-                        <div style={{ textAlign: "center", flex: 1 }}>
-                          <div style={{ fontSize: "18px" }}>🧂</div>
-                          <div style={{ fontSize: "14px", fontWeight: "600", color: "#1f2937" }}>
-                            {nutriments["salt_100g"] ? `${nutriments["salt_100g"]}g` : "N/A"}
-                          </div>
-                          <div style={{ fontSize: "10px", color: "#6b7280" }}>Salt</div>
-                        </div>
-                        <div style={{ textAlign: "center", flex: 1 }}>
-                          <div style={{ fontSize: "18px" }}>🍬</div>
-                          <div style={{ fontSize: "14px", fontWeight: "600", color: "#1f2937" }}>
-                            {nutriments["sugars_100g"] ? `${nutriments["sugars_100g"]}g` : "N/A"}
-                          </div>
-                          <div style={{ fontSize: "10px", color: "#6b7280" }}>Sugar</div>
-                        </div>
-                        <div style={{ textAlign: "center", flex: 1 }}>
-                          <div style={{ fontSize: "18px" }}>💪</div>
-                          <div style={{ fontSize: "14px", fontWeight: "600", color: "#1f2937" }}>
-                            {nutriments["proteins_100g"] ? `${nutriments["proteins_100g"]}g` : "N/A"}
-                          </div>
-                          <div style={{ fontSize: "10px", color: "#6b7280" }}>Protein</div>
-                        </div>
-                      </div>
+                      <NutrientProgressBars
+                        calories={nutriments["energy-kcal_100g"]}
+                        salt={nutriments["salt_100g"]}
+                        sugars={nutriments["sugars_100g"]}
+                        proteins={nutriments["proteins_100g"]}
+                      />
                     )}
 
                     {/* Allergen Warning */}
