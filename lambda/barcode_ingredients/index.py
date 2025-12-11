@@ -10,7 +10,9 @@ import os
 import re
 import xml.etree.ElementTree as ET
 from aws_lambda_powertools import Logger, Tracer
+from typing import Dict, List, Optional, Tuple, Union, Any
 import re
+
 tracer = Tracer()
 logger = Logger()
 
@@ -18,7 +20,8 @@ bedrock = boto3.client("bedrock-runtime")
 dynamodb = boto3.resource('dynamodb')
 
 class DecimalEncoder(json.JSONEncoder):
-    def default(self, obj):
+    """Enhanced JSON encoder for Decimal types with better error handling."""
+    def default(self, obj: Any) -> Any:
         if isinstance(obj, Decimal):
             return float(obj)
         return super(DecimalEncoder, self).default(obj)
@@ -27,7 +30,8 @@ class DecimalEncoder(json.JSONEncoder):
 PRODUCT_TABLE_NAME = os.environ['PRODUCT_TABLE_NAME']
 OPEN_FOOD_FACTS_TABLE_NAME = os.environ['OPEN_FOOD_FACTS_TABLE_NAME']
 
-def generate_ingredients_description(ingredients, language):
+def generate_ingredients_description(ingredients: str, language: str) -> str:
+    """Generate ingredients description prompt with improved type safety."""
     language = language.capitalize()
     return f"""Here is a list of ingredients:
 <ingredients>
@@ -47,7 +51,8 @@ Skip the preamble and provide only the response in this XML format:
 
 
 
-def generate_additives_description(additives, language):
+def generate_additives_description(additives: List[str], language: str) -> str:
+    """Generate additives description prompt with improved type safety."""
     language = language.capitalize()
     return f"""Here is a list of additives:
 <additives>
@@ -91,21 +96,27 @@ class ProductNotFoundError(Exception):
     pass
 
 @tracer.capture_method
-def make_api_request(product_code):
+def make_api_request(product_code: str) -> Optional[Dict[str, Any]]:
     """
     Makes a GET request to the API endpoint for retrieving product information.
 
     Args:
-        product_code (str): The code of the product to retrieve information for.
+        product_code: The code of the product to retrieve information for.
 
     Returns:
-        dict or None: A dictionary containing product information if the request is successful,
-                      otherwise returns None. The dictionary includes fields like 'ingredients_text',
-                      'additives_tags', and 'product_name'.
+        A dictionary containing product information if the request is successful,
+        otherwise returns None. The dictionary includes fields like 'ingredients_text',
+        'additives_tags', and 'product_name'.
+        
+    Raises:
+        ProductNotFoundError: When product is not found (404)
+        ValueError: For other HTTP errors
+        Exception: For general request failures
     """
-
-
     api_url = os.environ.get('API_URL')
+    if not api_url:
+        raise ValueError("API_URL environment variable is not set")
+        
     url = f'{api_url}/api/v2/product/{product_code}'
     headers = {'Accept': 'application/json'}
     fixed_params = {'fields': 'ingredients_text,additives_tags,product_name,allergens_tags,nutriments,labels_tags,categories,nova_group,nutriscore_grade,ecoscore_grade,brands'}
@@ -125,12 +136,17 @@ def make_api_request(product_code):
             # Handle this case gracefully, maybe return a default value or do something else
             raise ProductNotFoundError("Product not found on Open Food Facts API")
         else:
-            logger.error("HTTPError", e)
-            raise ValueError(e)
+            logger.error(f"HTTPError: {e}")
+            raise ValueError(f"HTTP error {e.response.status_code}: {e}")
 
-    except Exception as e:
-        error_message = f"Error in make_api_request: {e}"
-        logger.error("Error", e)
+    except requests.RequestException as e:
+        error_message = f"Request failed for product {product_code}: {e}"
+        logger.error(error_message)
+        raise Exception(error_message)
+        
+    except json.JSONDecodeError as e:
+        error_message = f"Failed to decode JSON response for product {product_code}: {e}"
+        logger.error(error_message)
         raise Exception(error_message)
 
 def call_claude_haiku(prompt_text):
@@ -169,16 +185,16 @@ def call_claude_haiku(prompt_text):
     results = response_body.get("content")[0].get("text")
     return results
 
-def filter_nutriments(nutriments):
+def filter_nutriments(nutriments: Optional[Dict[str, Any]]) -> Dict[str, Decimal]:
     """
     Filters nutriments to only include key nutritional fields.
     Converts numeric values to Decimal for DynamoDB compatibility.
     
     Args:
-        nutriments (dict): Full nutriments dictionary from API
+        nutriments: Full nutriments dictionary from API
         
     Returns:
-        dict: Filtered nutriments with only key fields (excludes None values)
+        Filtered nutriments with only key fields (excludes None values)
     """
     if not nutriments:
         return {}
@@ -196,11 +212,15 @@ def filter_nutriments(nutriments):
     ]
     
     # Filter out None values and convert to Decimal for DynamoDB
-    filtered = {}
+    filtered: Dict[str, Decimal] = {}
     for k in key_fields:
         if k in nutriments and nutriments[k] is not None:
-            # Convert to Decimal for DynamoDB compatibility
-            filtered[k] = Decimal(str(nutriments[k]))
+            try:
+                # Convert to Decimal for DynamoDB compatibility
+                filtered[k] = Decimal(str(nutriments[k]))
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Failed to convert nutriment {k} to Decimal: {e}")
+                continue
     
     return filtered
 
