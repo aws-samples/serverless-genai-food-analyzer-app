@@ -40,7 +40,7 @@ const BarcodeIngredients: React.FC<BarcodeIngredientsProps> = ({
   const [additives, setAdditives] = useState<any[]>([]);
   const [apiResponse, setApiResponse] = useState(null);
   const [loading, setLoading] = useState(true); // Added loading state
-  const [productName, setProductName] = useState(true); // Added loading state
+  const [productName, setProductName] = useState<string>(""); // Added loading state
   const [ingredientsError, setIngredientsError] = useState("");
   const [nutriments, setNutriments] = useState<any>(null);
   const [allergensTags, setAllergensTags] = useState<string[]>([]);
@@ -50,6 +50,8 @@ const BarcodeIngredients: React.FC<BarcodeIngredientsProps> = ({
   const [ecoscoreGrade, setEcoscoreGrade] = useState<string | undefined>(undefined);
   const [brands, setBrands] = useState<string | undefined>(undefined);
   const [healthGoal, setHealthGoal] = useState<string | undefined>(undefined);
+  const [imageSmallUrl, setImageSmallUrl] = useState<string | undefined>(undefined);
+  const [imageThumbUrl, setImageThumbUrl] = useState<string | undefined>(undefined);
 
   // Check if ingredient matches user allergens
   const isAllergen = (ingredientLabel: string): boolean => {
@@ -115,6 +117,8 @@ const BarcodeIngredients: React.FC<BarcodeIngredientsProps> = ({
         setNutriscoreGrade(response.nutriscore_grade);
         setEcoscoreGrade(response.ecoscore_grade);
         setBrands(response.brands);
+        setImageSmallUrl(response.image_small_url);
+        setImageThumbUrl(response.image_thumb_url);
 
         // Extract health goal from user preferences
         const stored = localStorage.getItem("userPreferences");
@@ -191,22 +195,40 @@ const BarcodeIngredients: React.FC<BarcodeIngredientsProps> = ({
                 {/* Product Header Card */}
                 <Container>
                   <SpaceBetween size="m">
-                    <div style={{ padding: "8px 0" }}>
-                      <h2 style={{ 
-                        margin: "0 0 4px 0", 
-                        fontSize: "20px", 
-                        fontWeight: "600",
-                        color: "#1f2937"
-                      }}>
-                        {productName}
-                      </h2>
-                      <p style={{ 
-                        margin: 0, 
-                        fontSize: "14px", 
-                        color: "#6b7280" 
-                      }}>
-                        {currentTranslations["scan_scanned_label"]}: {productCode}
-                      </p>
+                    <div style={{ padding: "8px 0", display: "flex", alignItems: "center", gap: "12px" }}>
+                      {imageSmallUrl && (
+                        <img 
+                          src={imageSmallUrl} 
+                          alt={productName}
+                          style={{
+                            width: "60px",
+                            height: "60px",
+                            borderRadius: "8px",
+                            objectFit: "cover",
+                            border: "1px solid #e5e7eb"
+                          }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      )}
+                      <div style={{ flex: 1 }}>
+                        <h2 style={{ 
+                          margin: "0 0 4px 0", 
+                          fontSize: "20px", 
+                          fontWeight: "600",
+                          color: "#1f2937"
+                        }}>
+                          {productName}
+                        </h2>
+                        <p style={{ 
+                          margin: 0, 
+                          fontSize: "14px", 
+                          color: "#6b7280" 
+                        }}>
+                          {currentTranslations["scan_scanned_label"]}: {productCode}
+                        </p>
+                      </div>
                     </div>
 
                     {/* Quality Score Card */}

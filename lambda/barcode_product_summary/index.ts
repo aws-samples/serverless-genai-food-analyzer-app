@@ -317,7 +317,7 @@ async function generateSummary(promptText: string, responseStream: NodeJS.Writab
         contentType: "application/json",
         accept: "application/json",
         body: JSON.stringify(payload),
-        performanceConfigLatency: 'standard'
+        performanceConfigLatency: 'standard' as const
     };
     let completion = '';
     try {

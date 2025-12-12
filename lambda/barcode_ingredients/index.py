@@ -119,7 +119,7 @@ def make_api_request(product_code: str) -> Optional[Dict[str, Any]]:
         
     url = f'{api_url}/api/v2/product/{product_code}'
     headers = {'Accept': 'application/json'}
-    fixed_params = {'fields': 'ingredients_text,additives_tags,product_name,allergens_tags,nutriments,labels_tags,categories,nova_group,nutriscore_grade,ecoscore_grade,brands'}
+    fixed_params = {'fields': 'ingredients_text,additives_tags,product_name,allergens_tags,nutriments,labels_tags,categories,nova_group,nutriscore_grade,ecoscore_grade,brands,image_small_url,image_thumb_url'}
     full_url = f'{url}?{urllib.parse.urlencode(fixed_params)}'
     logger.debug("Calling the API to get the product informations")
 
@@ -324,8 +324,8 @@ def get_product_from_db(product_code, language):
 
     Returns:
         tuple: A tuple containing product name, ingredients, additives, allergens, nutriments, labels, categories,
-               nova_group, nutriscore_grade, ecoscore_grade, and brands if the product is found in the database;
-               otherwise, returns (None, None, None, None, None, None, None, None, None, None, None).
+               nova_group, nutriscore_grade, ecoscore_grade, brands, and image URLs if the product is found in the database;
+               otherwise, returns (None, None, None, None, None, None, None, None, None, None, None, None, None).
     """
 
     table = dynamodb.Table(PRODUCT_TABLE_NAME)
@@ -351,19 +351,21 @@ def get_product_from_db(product_code, language):
             nutriscore_grade = item.get('nutriscore_grade')
             ecoscore_grade = item.get('ecoscore_grade')
             brands = item.get('brands')
+            image_small_url = item.get('image_small_url')
+            image_thumb_url = item.get('image_thumb_url')
             
             # Check if either ingredients or additives don't exist, then return None
             if ingredients is None or additives is None:
-                return None, None, None, None, None, None, None, None, None, None, None
-            return product_name, ingredients, additives, allergens, nutriments, labels, categories, nova_group, nutriscore_grade, ecoscore_grade, brands
+                return None, None, None, None, None, None, None, None, None, None, None, None, None
+            return product_name, ingredients, additives, allergens, nutriments, labels, categories, nova_group, nutriscore_grade, ecoscore_grade, brands, image_small_url, image_thumb_url
         else:
-            return None, None, None, None, None, None, None, None, None, None, None
+            return None, None, None, None, None, None, None, None, None, None, None, None, None
     except Exception as e:
         logger.error("Error while getting the Product from database", e)
-        return None, None, None, None, None, None, None, None, None, None, None
+        return None, None, None, None, None, None, None, None, None, None, None, None, None
 
 @tracer.capture_method
-def write_product_to_db(product_code, language, product_name, ingredients, additives, allergens, nutriments, labels, categories, nova_group, nutriscore_grade, ecoscore_grade, brands):
+def write_product_to_db(product_code, language, product_name, ingredients, additives, allergens, nutriments, labels, categories, nova_group, nutriscore_grade, ecoscore_grade, brands, image_small_url=None, image_thumb_url=None):
     """
     Writes product information product table.
 
@@ -428,6 +430,13 @@ def write_product_to_db(product_code, language, product_name, ingredients, addit
             
         if brands:
             item['brands'] = brands
+            
+        # Add image URLs if available
+        if image_small_url:
+            item['image_small_url'] = image_small_url
+            
+        if image_thumb_url:
+            item['image_thumb_url'] = image_thumb_url
 
         # Write item to DynamoDB table
         response = table.put_item(Item=item)
@@ -503,6 +512,8 @@ def fetch_new_product(product_code, language):
         nutriscore_grade=None
         ecoscore_grade=None
         brands=None
+        image_small_url=None
+        image_thumb_url=None
         
         if 'product' not in response_data or 'ingredients_text' not in response_data['product']:
             raise ValueError("Missing ingredients in Open Food Facts API. Unable to generate a personalized summary for this product.")
@@ -548,11 +559,18 @@ def fetch_new_product(product_code, language):
             
         if 'product' in response_data and 'brands' in response_data['product']:
             brands = response_data['product']['brands']
+            
+        # Extract image URLs
+        if 'product' in response_data and 'image_small_url' in response_data['product']:
+            image_small_url = response_data['product']['image_small_url']
+            
+        if 'product' in response_data and 'image_thumb_url' in response_data['product']:
+            image_thumb_url = response_data['product']['image_thumb_url']
 
-        return response_ingredients, response_additives, product_name, allergens, nutriments, labels, categories, nova_group, nutriscore_grade, ecoscore_grade, brands
+        return response_ingredients, response_additives, product_name, allergens, nutriments, labels, categories, nova_group, nutriscore_grade, ecoscore_grade, brands, image_small_url, image_thumb_url
 
     else:
-        return None, None, None, None, None, None, None, None, None, None, None
+        return None, None, None, None, None, None, None, None, None, None, None, None, None
 
 @logger.inject_lambda_context(log_event=True)
 @tracer.capture_lambda_handler
@@ -563,18 +581,18 @@ def handler(event, context):
         product_code = fields[1]
         language = fields[2]
         logger.debug("ProductCode="+product_code)
-        product_name, response_ingredients, response_additives, allergens, nutriments, labels, categories, nova_group, nutriscore_grade, ecoscore_grade, brands = get_product_from_db(product_code, language)
+        product_name, response_ingredients, response_additives, allergens, nutriments, labels, categories, nova_group, nutriscore_grade, ecoscore_grade, brands, image_small_url, image_thumb_url = get_product_from_db(product_code, language)
         
         if product_name is not None:        
             logger.debug("Product found in the database")
         else:
             logger.debug("Product not found in the database")
 
-            response_ingredients, response_additives, product_name, allergens, nutriments, labels, categories, nova_group, nutriscore_grade, ecoscore_grade, brands = fetch_new_product(product_code, language)
+            response_ingredients, response_additives, product_name, allergens, nutriments, labels, categories, nova_group, nutriscore_grade, ecoscore_grade, brands, image_small_url, image_thumb_url = fetch_new_product(product_code, language)
             
             
             if  response_ingredients is not None:
-                write_product_to_db(product_code, language, product_name, response_ingredients, response_additives, allergens, nutriments, labels, categories, nova_group, nutriscore_grade, ecoscore_grade, brands)
+                write_product_to_db(product_code, language, product_name, response_ingredients, response_additives, allergens, nutriments, labels, categories, nova_group, nutriscore_grade, ecoscore_grade, brands, image_small_url, image_thumb_url)
 
             if(response_ingredients is None):
                 response_ingredients = {"Ingredients Generation Error": "Description Generation Unavailable"}                
@@ -591,7 +609,9 @@ def handler(event, context):
                 "nova_group": nova_group,
                 "nutriscore_grade": nutriscore_grade,
                 "ecoscore_grade": ecoscore_grade,
-                "brands": brands
+                "brands": brands,
+                "image_small_url": image_small_url,
+                "image_thumb_url": image_thumb_url
         }
 
         logger.debug("Response", extra=response)
