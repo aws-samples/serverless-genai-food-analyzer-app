@@ -1,6 +1,6 @@
 # Food analyzer app
 
-**Food analyzer app** is a personalized GenAI nutritional webapp for your shopping and cooking recipes built with serverless architecture and generative AI capabilities. It was first created as the winner of the AWS Hackathon France 2024 and then introduced as a booth exhibit at the AWS Summit Paris 2024.
+**Food analyzer app** is a personalized GenAI nutritional webapp for your shopping and cooking recipes built with serverless architecture and generative AI capabilities. It was first created as the winner of the AWS Hackathon France 2024 and then introduced at several AWS Summit.
 
 - Customers use their cell phone to scan a bar code of a product to get the explanations of the ingredients and nutritional information of a grocery product personalized with your allergies and diet.
 - Customers can also take a picture of food products and discover 3 personalized recipes based on their food preferences.
@@ -39,7 +39,6 @@ Just scan the barcode with the app for an explained list of ingredients/allergen
 - [Key Technical Features](#key-technical-features)
 - [License](#license)
 
-
 ## Architecture 
 
 The architecture of the application can be split in 4 blocks:
@@ -62,6 +61,7 @@ The architecture of the application can be split in 4 blocks:
 
 - **Implementation**: Using AWS Lambda for server-side logic and a database from [Open Food Facts](https://fr.openfoodfacts.org/) accessed through APIs.
 - **Data Integration**: The app retrieves allergen tags and nutritional data (calories, sugars, fats, proteins, etc.) from Open Food Facts API for accurate, data-driven recommendations.
+- **Product Thumbnails**: Real product images are displayed as 60x60px thumbnails next to product names, sourced directly from Open Food Facts database for visual product identification.
 - **Safety Features**: Direct allergen detection from API data ensures reliable allergen warnings without relying solely on ingredient text parsing.
 
 #### Product Summary and Generative Recipe:
@@ -71,8 +71,6 @@ The architecture of the application can be split in 4 blocks:
 - **AI Model Development**: Choosing the LLM model had an impact on response quality and latency. Ultimately, we chose Anthropic Claude 3 Haiku as a good ratio between latency and quality.
 
 - **AI-Generated Images**: Prompting for an image is very sensitive and was a challenge to generate an image that truly highlights the nutritive features of products. To craft the prompt, we used a first LLM to generate the prompt based on product nutritive features. This technique is similar to a self-querying for vector databases. Using multi-shot prompt-engineering also helped a lot to improve the quality of the prompt. Images are generated using Amazon Nova Canvas.
-
-
 
 ## Features
 
@@ -92,7 +90,6 @@ The architecture of the application can be split in 4 blocks:
   <img src="img/barcode_scan_1.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
 </p>
 
-
 #### Summary
 
 - **Strategy**: Acknowledging the diversity of user preferences and dietary needs, our app incorporates a robust personalization feature. Beyond providing raw data, the app aims to educate users about the nutritional implications of their choices.
@@ -100,11 +97,11 @@ The architecture of the application can be split in 4 blocks:
 - **Implementation**: Users feel a sense of ownership and connection as the app tailors its insights to align with their individual health goals and dietary constraints. Incorporating concise and informative content within the app ensures that users understand the significance of various nutritional components. This educational aspect transforms the app into a learning tool, fostering a deeper connection with users seeking to enhance their nutritional literacy.
 
 <p align="center">
-  <img src="img/barcode_ingredients_1.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
-  <img src="img/barcode_additives_1.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
-  <img src="img/barcode_summary_1.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
+  <img src="img/barcode_img1.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
+  <img src="img/barcode_img2.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
+  <img src="img/barcode_img3.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
+  <img src="img/barcode_img4.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
 </p>
-
 
 #### AI-Generated Image as visual cues
 
@@ -112,19 +109,14 @@ The architecture of the application can be split in 4 blocks:
 
 - **Implementation**: Amazon Bedrock offers an out-of-the-box developer experience in generating visually striking representations of scanned products. If a product contains excessive sugar, for example, the AI image surrounds it with a visual depiction of sugar, serving as an engaging and memorable visual cue.
 
-
 <p align="center">
-  <img src="img/barcode_img1.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
-  <img src="img/barcode_img2.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
-  <img src="img/barcode_img3.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
+  <img src="img/barcode_img5.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
 </p>
 
 ### Personalized recipe generator
 
-
 <p align="center">
   <img src="img/recipe_home.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
-
 </p>
 
 #### Food aliment detection
@@ -168,8 +160,6 @@ Each recipe must also respect the user's dietary restrictions and allergies.
 
 - **Image Generation**: Once we have the recipe title and description, we use Amazon Nova Canvas to generate the image of the recipe. We generate images in parallel to reduce the latency of the response.
 
-
-
 <p align="center">
   <img src="img/recipe_proposition.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
 </p>
@@ -185,8 +175,6 @@ The output format is a Markdown file to faciliate the display of the recipe on t
 <p align="center">
   <img src="img/recipe_step_by_step.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
 </p>
-
-
 
 ## Key Functional Highlights
 
@@ -206,7 +194,6 @@ The output format is a Markdown file to faciliate the display of the recipe on t
 
 - **Solution**: Using Lazy loading with the key being the hash of the prompt allow us to reduce cost and deliver response faster.
 
-
 **Prompt Engineering for AI Image Generation**
 
 - **Challenge**: Crafting a prompt for generating AI images that effectively highlighted nutritional features posed a nuanced challenge.
@@ -218,6 +205,10 @@ The output format is a Markdown file to faciliate the display of the recipe on t
 - **Challenge**: Integrating personalized dietary preferences and restrictions into the model presented complexity.
 
 - **Solution**: To enhance the LLM's understanding, we dynamically incorporated a header in our prompt containing personalized allergy and diet inputs. This approach significantly improved the accuracy and relevance of the LLM's responses, ensuring a tailored experience for users. Personalized prompts became a cornerstone in delivering precise and relevant information based on individual preferences.
+
+<p align="center">
+  <img src="img/preferences.jpg" style="border: 1px solid black; border-radius: 10px; margin: 5px;" width="200" />
+</p>
 
 **Multi language support**
 
@@ -250,10 +241,7 @@ The output format is a Markdown file to faciliate the display of the recipe on t
   
   This reduces LLM hallucination and provides more confident dietary and religious compatibility assessments.
 
-
-
 ## Key Technical Features
-
 
 **AWS Lambda URL & Amazon CloudFront**
 - **Challenge**: Calling an LLM to execute some tasks in a request response mode can be slow.
@@ -271,7 +259,6 @@ The output format is a Markdown file to faciliate the display of the recipe on t
 - **Text generation** - Amazon Bedrock utilizes Anthropic Claude 3 Haiku to generate the product summary.
 - **Text to image** - Amazon Bedrock utilizes Amazon Nova Canvas to generate an image of the product.
 - **Image to text** - Anthropic Claude 3 Sonnet is leveraged by Amazon Bedrock to identify food elements in the image.
-
 
 ## Installation
 
@@ -335,7 +322,6 @@ The application uses the following AWS Lambda runtimes:
 
 The Node.js functions were upgraded to Node.js 24 in December 2025 to leverage the latest features including improved HTTP performance (Undici 7), explicit resource management, and enhanced async context handling. See [NODEJS_24_UPGRADE.md](./NODEJS_24_UPGRADE.md) for details.
 
-
 ## Resources
 
 - [A Journey into Crafting an Award-Winning Gen-AI Serverless App with AWS](https://www.linkedin.com/feed/update/urn:li:activity:7168621188091469826/)
@@ -343,4 +329,4 @@ The Node.js functions were upgraded to Node.js 24 in December 2025 to leverage t
 
 ## License
 
-This project is licensed under the MIT-0 License. See the [LICENSE](./LICENCE) file.      
+This project is licensed under the MIT-0 License. See the [LICENSE](./LICENCE) file.
