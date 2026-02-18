@@ -19,12 +19,22 @@ const Preferences: React.FC = () => {
   const { devMode, setDevMode } = useContext(DevModeContext);
   const currentTranslations = customTranslations[language];
 
+  // Currency symbol based on language
+  const currencySymbol = ['french', 'spanish', 'italian'].includes(language) ? '€' : '$';
+
+  // Dietary preferences
   const [healthGoal, setHealthGoal] = useState<any>(null);
   const [allergies, setAllergies] = useState<readonly any[]>([]);
   const [dietaryPrefs, setDietaryPrefs] = useState<readonly any[]>([]);
   const [religion, setReligion] = useState<any>(null);
   const [dislikedIngredients, setDislikedIngredients] = useState<readonly any[]>([]);
   const [favoriteCuisines, setFavoriteCuisines] = useState<readonly any[]>([]);
+
+  // Recipe context (from /recipe page)
+  const [recipeTime, setRecipeTime] = useState<any>({ label: "30 min", value: "30" });
+  const [recipePeople, setRecipePeople] = useState<any>({ label: "4 people", value: "4" });
+  const [recipeEquipment, setRecipeEquipment] = useState<readonly any[]>([]);
+  const [recipeBudget, setRecipeBudget] = useState<any>({ label: "$10", value: "10" });
 
   const healthGoals: Record<string, any> = {
     english: [
@@ -305,6 +315,16 @@ const Preferences: React.FC = () => {
       setDislikedIngredients(prefs.dislikedIngredients || []);
       setFavoriteCuisines(prefs.favoriteCuisines || []);
     }
+    
+    // Load recipe context
+    const storedContext = localStorage.getItem("recipeContext");
+    if (storedContext) {
+      const context = JSON.parse(storedContext);
+      setRecipeTime(context.time || { label: "30 min", value: "30" });
+      setRecipePeople(context.people || { label: "4 people", value: "4" });
+      setRecipeEquipment(context.equipment || []);
+      setRecipeBudget(context.budget || { label: "$10", value: "10" });
+    }
   }, []);
 
   const savePreferences = () => {
@@ -318,6 +338,15 @@ const Preferences: React.FC = () => {
     };
     localStorage.setItem("userPreferences", JSON.stringify(prefs));
     
+    // Save recipe context
+    const context = {
+      time: recipeTime,
+      people: recipePeople,
+      equipment: recipeEquipment,
+      budget: recipeBudget,
+    };
+    localStorage.setItem("recipeContext", JSON.stringify(context));
+    
     // Legacy format for backward compatibility
     const legacyAllergies: any = {};
     allergies.forEach(a => legacyAllergies[a.value] = true);
@@ -330,89 +359,247 @@ const Preferences: React.FC = () => {
 
   useEffect(() => {
     savePreferences();
-  }, [healthGoal, allergies, dietaryPrefs, religion, dislikedIngredients, favoriteCuisines]);
+  }, [healthGoal, allergies, dietaryPrefs, religion, dislikedIngredients, favoriteCuisines, recipeTime, recipePeople, recipeEquipment, recipeBudget]);
 
   return (
-    <SpaceBetween size="l">
-      <Container header={<Header variant="h2">{currentTranslations["pref_health_goals"]}</Header>}>
-        <FormField label={currentTranslations["pref_health_goal_label"]}>
-          <Select
-            selectedOption={healthGoal}
-            onChange={({ detail }) => setHealthGoal(detail.selectedOption)}
-            options={healthGoals[language] || healthGoals.english}
-            placeholder={currentTranslations["pref_select_goal"]}
-            selectedAriaLabel="Selected"
-          />
-        </FormField>
-      </Container>
+    <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+      {/* Hero Section - Compact on mobile */}
+      <div style={{
+        background: "linear-gradient(135deg, #00C853 0%, #64DD17 100%)",
+        borderRadius: "16px",
+        padding: "20px 16px",
+        marginBottom: "20px",
+        boxShadow: "0 4px 16px rgba(0, 200, 83, 0.2)",
+        textAlign: "center",
+      }}>
+        <h1 style={{
+          fontSize: "clamp(1.3rem, 4vw, 2.2rem)",
+          fontWeight: "700",
+          color: "#fff",
+          marginBottom: "6px",
+          textShadow: "0 2px 10px rgba(0,0,0,0.2)",
+          lineHeight: "1.2",
+        }}>
+          🎯 Personalize Your Shopping
+        </h1>
+        <p style={{
+          color: "rgba(255, 255, 255, 0.95)",
+          fontSize: "clamp(0.85rem, 2.5vw, 1rem)",
+          marginBottom: "0",
+          lineHeight: "1.3",
+        }}>
+          Set once - perfect recipes every time
+        </p>
+      </div>
 
-      <Container header={<Header variant="h2">{currentTranslations["preference_title_allergies"]}</Header>}>
-        <SpaceBetween size="m">
-          <FormField label={currentTranslations["pref_allergies_label"]}>
-            <Multiselect
-              selectedOptions={allergies}
-              onChange={({ detail }) => setAllergies(detail.selectedOptions)}
-              options={allergyOptions[language] || allergyOptions.english}
-              placeholder={currentTranslations["pref_select_allergies"]}
-              selectedAriaLabel="Selected"
-            />
-          </FormField>
-
-          <FormField label={currentTranslations["preference_title_other"]}>
-            <Multiselect
-              selectedOptions={dietaryPrefs}
-              onChange={({ detail }) => setDietaryPrefs(detail.selectedOptions)}
-              options={dietaryOptions[language] || dietaryOptions.english}
-              placeholder={currentTranslations["pref_select_dietary"]}
-              selectedAriaLabel="Selected"
-            />
-          </FormField>
-
-          <FormField label={currentTranslations["pref_religious"]}>
+      <SpaceBetween size="l">
+        {/* Household Section - Compact Card */}
+        <div style={{
+          background: "#fff",
+          borderRadius: "16px",
+          padding: "24px",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+          border: "1px solid #e0e0e0",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: "16px" }}>
+            <span style={{ fontSize: "2rem", marginRight: "12px" }}>👨‍👩‍👧‍👦</span>
+            <h2 style={{ margin: 0, fontSize: "1.4rem", color: "#333" }}>{currentTranslations["pref_household"]}</h2>
+          </div>
+          <FormField label={currentTranslations["pref_people_label"]}>
             <Select
-              selectedOption={religion}
-              onChange={({ detail }) => setReligion(detail.selectedOption)}
-              options={religionOptions[language] || religionOptions.english}
-              placeholder={currentTranslations["pref_select_religious"]}
-              selectedAriaLabel="Selected"
+              selectedOption={recipePeople}
+              onChange={({ detail }) => setRecipePeople(detail.selectedOption)}
+              options={[
+                { label: currentTranslations["people_1"], value: "1" },
+                { label: currentTranslations["people_2"], value: "2" },
+                { label: currentTranslations["people_4"], value: "4" },
+                { label: currentTranslations["people_6"], value: "6" },
+                { label: currentTranslations["people_8"], value: "8" },
+              ]}
             />
           </FormField>
-        </SpaceBetween>
-      </Container>
+        </div>
 
-      <Container header={<Header variant="h2">{currentTranslations["pref_food_prefs"]}</Header>}>
-        <SpaceBetween size="m">
-          <FormField label={currentTranslations["pref_disliked"]}>
+        {/* Dietary Preferences - Expanded Card */}
+        <div style={{
+          background: "#fff",
+          borderRadius: "16px",
+          padding: "24px",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+          border: "1px solid #e0e0e0",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: "20px" }}>
+            <span style={{ fontSize: "2rem", marginRight: "12px" }}>🥗</span>
+            <h2 style={{ margin: 0, fontSize: "1.4rem", color: "#333" }}>{currentTranslations["preference_title_allergies"]}</h2>
+          </div>
+          <SpaceBetween size="m">
+            <FormField label={currentTranslations["pref_health_goal_label"]}>
+              <Select
+                selectedOption={healthGoal}
+                onChange={({ detail }) => setHealthGoal(detail.selectedOption)}
+                options={healthGoals[language] || healthGoals.english}
+                placeholder={currentTranslations["pref_select_goal"]}
+                selectedAriaLabel="Selected"
+              />
+            </FormField>
+
+            <FormField label={currentTranslations["pref_allergies_label"]}>
+              <Multiselect
+                selectedOptions={allergies}
+                onChange={({ detail }) => setAllergies(detail.selectedOptions)}
+                options={allergyOptions[language] || allergyOptions.english}
+                placeholder={currentTranslations["pref_select_allergies"]}
+                selectedAriaLabel="Selected"
+              />
+            </FormField>
+
+            <FormField label={currentTranslations["preference_title_other"]}>
+              <Multiselect
+                selectedOptions={dietaryPrefs}
+                onChange={({ detail }) => setDietaryPrefs(detail.selectedOptions)}
+                options={dietaryOptions[language] || dietaryOptions.english}
+                placeholder={currentTranslations["pref_select_dietary"]}
+                selectedAriaLabel="Selected"
+              />
+            </FormField>
+
+            <FormField label={currentTranslations["pref_religious"]}>
+              <Select
+                selectedOption={religion}
+                onChange={({ detail }) => setReligion(detail.selectedOption)}
+                options={religionOptions[language] || religionOptions.english}
+                placeholder={currentTranslations["pref_select_religious"]}
+                selectedAriaLabel="Selected"
+              />
+            </FormField>
+
+            <FormField label={currentTranslations["pref_disliked"]}>
+              <Multiselect
+                selectedOptions={dislikedIngredients}
+                onChange={({ detail }) => setDislikedIngredients(detail.selectedOptions)}
+                options={commonDislikes[language] || commonDislikes.english}
+                placeholder={currentTranslations["pref_select_disliked"]}
+                selectedAriaLabel="Selected"
+              />
+            </FormField>
+
+            <FormField label={currentTranslations["pref_cuisines"]}>
+              <Multiselect
+                selectedOptions={favoriteCuisines}
+                onChange={({ detail }) => setFavoriteCuisines(detail.selectedOptions)}
+                options={cuisineOptions[language] || cuisineOptions.english}
+                placeholder={currentTranslations["pref_select_cuisines"]}
+                selectedAriaLabel="Selected"
+              />
+            </FormField>
+          </SpaceBetween>
+        </div>
+
+        {/* Kitchen Equipment - Icon Grid */}
+        <div style={{
+          background: "#fff",
+          borderRadius: "16px",
+          padding: "24px",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+          border: "1px solid #e0e0e0",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: "20px" }}>
+            <span style={{ fontSize: "2rem", marginRight: "12px" }}>🍳</span>
+            <h2 style={{ margin: 0, fontSize: "1.4rem", color: "#333" }}>{currentTranslations["pref_kitchen_equipment"]}</h2>
+          </div>
+          <FormField label={currentTranslations["pref_equipment_label"]}>
             <Multiselect
-              selectedOptions={dislikedIngredients}
-              onChange={({ detail }) => setDislikedIngredients(detail.selectedOptions)}
-              options={commonDislikes[language] || commonDislikes.english}
-              placeholder={currentTranslations["pref_select_disliked"]}
+              selectedOptions={recipeEquipment}
+              onChange={({ detail }) => setRecipeEquipment(detail.selectedOptions)}
+              options={[
+                { label: `🔥 ${currentTranslations["equipment_stovetop"]}`, value: "stovetop" },
+                { label: `🔲 ${currentTranslations["equipment_oven"]}`, value: "oven" },
+                { label: `📻 ${currentTranslations["equipment_microwave"]}`, value: "microwave" },
+                { label: `🌪️ ${currentTranslations["equipment_airfryer"]}`, value: "airfryer" },
+                { label: `⚡ ${currentTranslations["equipment_instantpot"]}`, value: "instantpot" },
+                { label: `🍚 ${currentTranslations["equipment_ricecooker"]}`, value: "ricecooker" },
+                { label: `🌀 ${currentTranslations["equipment_blender"]}`, value: "blender" },
+                { label: `⚙️ ${currentTranslations["equipment_foodprocessor"]}`, value: "foodprocessor" },
+              ]}
+              placeholder="Select your available equipment"
               selectedAriaLabel="Selected"
             />
           </FormField>
+        </div>
 
-          <FormField label={currentTranslations["pref_cuisines"]}>
-            <Multiselect
-              selectedOptions={favoriteCuisines}
-              onChange={({ detail }) => setFavoriteCuisines(detail.selectedOptions)}
-              options={cuisineOptions[language] || cuisineOptions.english}
-              placeholder={currentTranslations["pref_select_cuisines"]}
-              selectedAriaLabel="Selected"
-            />
-          </FormField>
-        </SpaceBetween>
-      </Container>
+        {/* Budget & Time - Side by Side */}
+        <div style={{
+          background: "#fff",
+          borderRadius: "16px",
+          padding: "24px",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+          border: "1px solid #e0e0e0",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: "20px" }}>
+            <span style={{ fontSize: "2rem", marginRight: "12px" }}>💰</span>
+            <h2 style={{ margin: 0, fontSize: "1.4rem", color: "#333" }}>{currentTranslations["pref_budget_time"]}</h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+            <FormField label={currentTranslations["pref_max_time"]}>
+              <Select
+                selectedOption={recipeTime}
+                onChange={({ detail }) => setRecipeTime(detail.selectedOption)}
+                options={[
+                  { label: "15 min", value: "15" },
+                  { label: "30 min", value: "30" },
+                  { label: "45 min", value: "45" },
+                  { label: "60 min", value: "60" },
+                  { label: "90+ min", value: "90" },
+                ]}
+              />
+            </FormField>
 
-      <Container header={<Header variant="h2">{currentTranslations["dev_mode_title"]}</Header>}>
-        <Toggle
-          onChange={({ detail }) => setDevMode(detail.checked)}
-          checked={devMode}
-        >
-          {currentTranslations["dev_mode_label"]}
-        </Toggle>
-      </Container>
-    </SpaceBetween>
+            <FormField label={currentTranslations["pref_budget_person"]}>
+              <Select
+                selectedOption={recipeBudget}
+                onChange={({ detail }) => setRecipeBudget(detail.selectedOption)}
+                options={[
+                  { label: `${currencySymbol}5`, value: "5" },
+                  { label: `${currencySymbol}10`, value: "10" },
+                  { label: `${currencySymbol}15`, value: "15" },
+                  { label: `${currencySymbol}20`, value: "20" },
+                  { label: `${currencySymbol}30+`, value: "30" },
+                ]}
+              />
+            </FormField>
+          </div>
+        </div>
+
+        {/* Save Confirmation Banner */}
+        <div style={{
+          background: "linear-gradient(135deg, #00C853 0%, #64DD17 100%)",
+          borderRadius: "12px",
+          padding: "16px 24px",
+          textAlign: "center",
+          boxShadow: "0 4px 12px rgba(0, 200, 83, 0.2)",
+        }}>
+          <p style={{
+            color: "#fff",
+            margin: 0,
+            fontSize: "0.95rem",
+            fontWeight: "500",
+          }}>
+            ✅ {currentTranslations["pref_auto_save"]}
+          </p>
+        </div>
+
+        {devMode && (
+          <Container header={<Header variant="h2">{currentTranslations["dev_mode_title"]}</Header>}>
+            <Toggle
+              onChange={({ detail }) => setDevMode(detail.checked)}
+              checked={devMode}
+            >
+              {currentTranslations["dev_mode_label"]}
+            </Toggle>
+          </Container>
+        )}
+      </SpaceBetween>
+    </div>
   );
 };
 

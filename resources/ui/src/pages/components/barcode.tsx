@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Html5QrcodeScanType, Html5QrcodeScanner } from "html5-qrcode";
+import { useSearchParams } from "react-router-dom";
 import Button from "@cloudscape-design/components/button";
 import Ingredients from "./barcode_ingredients";
 import Badge from "@cloudscape-design/components/badge";
@@ -41,13 +42,22 @@ const isBarcodeValid = (decodedText: string) => {
 const Barcode: React.FC = () => {
   const language = useContext(LanguageContext);
   const { devMode } = useContext(DevModeContext);
+  const [searchParams] = useSearchParams();
   const [productCode, setProductCode] = useState("");
   const [showScanner, setShowScanner] = useState(false);
   const [tempProductCode, setTempProductCode] = useState("");
   const [hasPreferences, setHasPreferences] = useState(false);
-  const currentTranslations = customTranslations[language]; // Get translations for the current language or fallback to English
+  const currentTranslations = customTranslations[language];
 
   let html5QrcodeScanner: any;
+
+  // Auto-fetch product if barcode in URL
+  useEffect(() => {
+    const code = searchParams.get('code');
+    if (code && isBarcodeValid(code)) {
+      setProductCode(code);
+    }
+  }, [searchParams]);
 
   // Check if user has set preferences
   useEffect(() => {
@@ -164,14 +174,36 @@ const Barcode: React.FC = () => {
           </div>
         </div>
 
-        {!showScanner && (
-          <div style={{
-            background: "white",
-            borderRadius: "8px",
-            padding: "20px",
-            border: "1px solid #e5e7eb",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-          }}>
+        {!showScanner && !productCode && (
+          <div>
+            {/* Hero Section */}
+            <div style={{
+              background: "linear-gradient(135deg, #00C853 0%, #64DD17 100%)",
+              borderRadius: "16px",
+              padding: "20px 16px",
+              marginBottom: "20px",
+              boxShadow: "0 4px 16px rgba(0, 200, 83, 0.2)",
+              textAlign: "center",
+            }}>
+              <h1 style={{
+                fontSize: "clamp(1.3rem, 4vw, 2.5rem)",
+                fontWeight: "700",
+                color: "#fff",
+                marginBottom: "6px",
+                lineHeight: "1.2",
+              }}>
+                🔍 Scan Product Barcode
+              </h1>
+              <p style={{
+                color: "rgba(255, 255, 255, 0.95)",
+                fontSize: "clamp(0.85rem, 2.5vw, 1rem)",
+                marginBottom: "0",
+                lineHeight: "1.3",
+              }}>
+                Get personalized nutrition & allergen info
+              </p>
+            </div>
+
             {!hasPreferences && (
               <Alert
                 type="warning"
@@ -181,89 +213,6 @@ const Barcode: React.FC = () => {
                 <Link href="/preference">set your preferences</Link> before scanning.
               </Alert>
             )}
-            
-            <div style={{ 
-              textAlign: "center", 
-              margin: hasPreferences ? "0 0 24px 0" : "16px 0 24px 0"
-            }}>
-              <div style={{
-                fontSize: "48px",
-                marginBottom: "8px",
-                opacity: 0.8
-              }}>
-                📱
-              </div>
-              <h3 style={{ 
-                margin: "0 0 8px 0", 
-                fontSize: "18px", 
-                fontWeight: "600",
-                color: "#1f2937"
-              }}>
-                {currentTranslations["scan_main_title"]}
-              </h3>
-              <p style={{ 
-                margin: 0, 
-                fontSize: "14px", 
-                color: "#6b7280" 
-              }}>
-                Point your camera at a product barcode
-              </p>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px"
-              }}>
-                <div style={{
-                  background: "#3b82f6",
-                  color: "white",
-                  width: "24px",
-                  height: "24px",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "600",
-                  fontSize: "14px",
-                  flexShrink: 0
-                }}>
-                  1
-                </div>
-                <span style={{ fontSize: "15px", lineHeight: "1.5", color: "#374151" }}>
-                  {currentTranslations["scan_label_1"]}{" "}
-                  <Link href="/preference">
-                    {currentTranslations["scan_label_2"]}
-                  </Link>
-                </span>
-              </div>
-
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px"
-              }}>
-                <div style={{
-                  background: "#3b82f6",
-                  color: "white",
-                  width: "24px",
-                  height: "24px",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "600",
-                  fontSize: "14px",
-                  flexShrink: 0
-                }}>
-                  2
-                </div>
-                <span style={{ fontSize: "15px", lineHeight: "1.5", color: "#374151" }}>
-                  {currentTranslations["scan_label_3"]}
-                </span>
-              </div>
-            </div>
           </div>
         )}
         <div id="reader"></div>

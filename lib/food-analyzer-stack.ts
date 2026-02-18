@@ -6,6 +6,7 @@ import {
   aws_cloudfront_origins as origins,
   aws_cloudfront as cloudfront,
   aws_iam as iam,
+  aws_cloudtrail as cloudtrail,
   CfnOutput,
   Duration,
   Aws,
@@ -45,6 +46,13 @@ export class FoodAnalyzerStack extends Stack {
   public productSummary: IFunction;
   constructor(scope: Construct, id: string, stage: string, props: StackProps) {
     super(scope, id, props);
+
+    // Add cost allocation tags
+    cdk.Tags.of(this).add('Application', 'FoodAnalyzer');
+    cdk.Tags.of(this).add('Environment', stage);
+    cdk.Tags.of(this).add('CostCenter', 'Prototyping');
+    cdk.Tags.of(this).add('Owner', 'energy-utilities-france');
+    cdk.Tags.of(this).add('Project', 'SmartGroceries');
 
     const powerToolsLayer = lambda.LayerVersion.fromLayerVersionArn(
       this,
@@ -97,6 +105,36 @@ export class FoodAnalyzerStack extends Stack {
         sortKey: { name: "params_hash", type: dynamodb.AttributeType.STRING },
         billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
         encryption: TableEncryption.DEFAULT,
+        timeToLiveAttribute: "ttl",
+      }
+    );
+
+    const recipeCacheTable = new dynamodb.Table(
+      this,
+      "RecipeCacheTable",
+      {
+        partitionKey: {
+          name: "ingredients_hash",
+          type: dynamodb.AttributeType.STRING,
+        },
+        sortKey: { name: "params_hash", type: dynamodb.AttributeType.STRING },
+        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+        encryption: TableEncryption.DEFAULT,
+        timeToLiveAttribute: "ttl",
+      }
+    );
+
+    const ingredientCacheTable = new dynamodb.Table(
+      this,
+      "IngredientCacheTable",
+      {
+        partitionKey: {
+          name: "image_hash",
+          type: dynamodb.AttributeType.STRING,
+        },
+        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+        encryption: TableEncryption.DEFAULT,
+        timeToLiveAttribute: "ttl",
       }
     );
 
@@ -128,6 +166,21 @@ export class FoodAnalyzerStack extends Stack {
       }
     );
 
+    // Optimized cache policy for static assets
+    const staticAssetCachePolicy = new cloudfront.CachePolicy(
+      this,
+      "StaticAssetCachePolicy",
+      {
+        cachePolicyName: "StaticAssetCache-" + Aws.STACK_NAME,
+        defaultTtl: Duration.hours(24),
+        minTtl: Duration.minutes(1),
+        maxTtl: Duration.days(365),
+        headerBehavior: cloudfront.CacheHeaderBehavior.none(),
+        queryStringBehavior: cloudfront.CacheQueryStringBehavior.none(),
+        cookieBehavior: cloudfront.CacheCookieBehavior.none(),
+      }
+    );
+
     const hostingBucket = new s3.Bucket(this, "HostingBucket", {
       enforceSSL: true,
       encryption: s3.BucketEncryption.S3_MANAGED,
@@ -156,7 +209,7 @@ export class FoodAnalyzerStack extends Stack {
     const customImgBehaviour: cloudfront.BehaviorOptions = {
       origin: s3ImgOrigin,
       responseHeadersPolicy: myResponseHeadersPolicy,
-      cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED, //imgCachePolicy,
+      cachePolicy: staticAssetCachePolicy,
       allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
       viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
     };
@@ -176,7 +229,7 @@ export class FoodAnalyzerStack extends Stack {
       defaultBehavior: {
         origin: hostingOrigin,
         responseHeadersPolicy: myResponseHeadersPolicy,
-        cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED, //defaultCachePolicy,
+        cachePolicy: staticAssetCachePolicy,
         allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         functionAssociations: [
@@ -289,11 +342,14 @@ export class FoodAnalyzerStack extends Stack {
         environment: {
           POWERTOOLS_SERVICE_NAME: "food-lens",
           POWERTOOLS_LOG_LEVEL: "DEBUG",
+          INGREDIENT_CACHE_TABLE_NAME: ingredientCacheTable.tableName,
         },
       }
     );
 
     this.getImageIngredients = recipeImageIngredientsFunction;
+
+    ingredientCacheTable.grantReadWriteData(recipeImageIngredientsFunction);
 
     recipeImageIngredientsFunction.addToRolePolicy(
       new iam.PolicyStatement({
@@ -335,12 +391,14 @@ export class FoodAnalyzerStack extends Stack {
           POWERTOOLS_SERVICE_NAME: "food-lens",
           POWERTOOLS_LOG_LEVEL: "DEBUG",
           S3_BUCKET_NAME: imgBucket.bucketName,
+          RECIPE_CACHE_TABLE_NAME: recipeCacheTable.tableName,
         },
       }
     );
     this.generateRecipe = recipeProposalsFunction;
 
     imgBucket.grantWrite(recipeProposalsFunction);
+    recipeCacheTable.grantReadWriteData(recipeProposalsFunction);
 
     recipeProposalsFunction.addToRolePolicy(
       new iam.PolicyStatement({
@@ -707,6 +765,15 @@ export class FoodAnalyzerStack extends Stack {
       destinationBucket: hostingBucket,
       memoryLimit: 512,
     });
+    
+    // Deploy test fridge images to img bucket
+    new s3deploy.BucketDeployment(this, "DeployTestImages", {
+      sources: [s3deploy.Source.asset(path.join(__dirname, "..", "img"))],
+      destinationBucket: imgBucket,
+      destinationKeyPrefix: "img/",
+      memoryLimit: 512,
+    });
+    
     new FoodAnalyzerDashBoard(this, "Dashboard", {
       stage: stage,
       functionList: [
@@ -722,6 +789,24 @@ export class FoodAnalyzerStack extends Stack {
 
 
   const loadDatabase = new LoadDatabase(this, "LoadSF", openFoodFactsProductsTable, this.stackName);
+
+    // Enable CloudTrail for audit logging
+    const trailBucket = new s3.Bucket(this, 'TrailBucket', {
+      enforceSSL: true,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      lifecycleRules: [{
+        expiration: Duration.days(90),
+      }],
+    });
+
+    const trail = new cloudtrail.Trail(this, 'AuditTrail', {
+      trailName: `FoodAnalyzer-${stage}-Trail`,
+      bucket: trailBucket,
+      isMultiRegionTrail: false,
+      includeGlobalServiceEvents: true,
+      managementEvents: cloudtrail.ReadWriteType.ALL,
+    });
 
   }
 

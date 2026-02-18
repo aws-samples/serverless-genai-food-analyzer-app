@@ -16,6 +16,11 @@ export class Auth extends Construct {
     const userPool = new cognito.UserPool(this, "FoodAnalyzerUserPool", {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       selfSignUpEnabled: false,
+      mfa: cognito.Mfa.OPTIONAL,
+      mfaSecondFactor: {
+        sms: true,
+        otp: true,
+      },
       passwordPolicy: {
         minLength: 8,
         requireLowercase: true,

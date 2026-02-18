@@ -9,6 +9,8 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Barcode from "./components/barcode";
 import TopNav from "./components/navigation/TopNav";
 import Preferences from "./components/preferences";
+import { Favorites } from "./components/favorites";
+import { Cart } from "./components/cart";
 import { useState, useEffect } from "react";
 import Recipe from "./components/recipe";
 import { Home } from "./components/home";
@@ -69,6 +71,8 @@ function App() {
                 <Route path="barcode" element={<Barcode />} />
                 <Route path="recipe" element={<Recipe />} />
                 <Route path="preference" element={<Preferences />} />
+                <Route path="favorites" element={<Favorites />} />
+                <Route path="cart" element={<Cart />} />
               </Routes>
             }
           />
