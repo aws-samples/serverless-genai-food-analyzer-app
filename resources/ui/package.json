@@ -11,11 +11,11 @@
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.1.9",
-    "@aws-sdk/credential-provider-cognito-identity": "^3.490.0",
+    "@aws-sdk/credential-provider-cognito-identity": "^3.972.17",
     "@cloudscape-design/components": "^3.0.521",
     "@cloudscape-design/design-tokens": "^3.0.34",
     "@cloudscape-design/global-styles": "^1.0.23",
-    "aws-amplify": "^6.2.0",
+    "aws-amplify": "^6.16.3",
     "jquery": "^3.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
